@@ -275,7 +275,7 @@
                     "id": "82a92e28-6c4d-4988-94b5-e87537ac65ef",
                     "expectedControlType": "Button",
                     "processors": "",
-                    "interactions": "",
+                    "interactions": "Press",
                     "initialStateCheck": false
                 },
                 {
@@ -767,6 +767,34 @@
                     "processors": "",
                     "groups": "XR",
                     "action": "TrackedDeviceOrientation",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "GameController",
+            "id": "47f3f928-5be0-4614-a132-95e8deca9e4c",
+            "actions": [
+                {
+                    "name": "NextTurn",
+                    "type": "Button",
+                    "id": "83fdc6d0-774d-4003-96c8-ef1044ed31ea",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "244a41ba-eb54-4d87-98bb-8c616d2a6ecf",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse;Gamepad;Touch;Joystick;XR",
+                    "action": "NextTurn",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

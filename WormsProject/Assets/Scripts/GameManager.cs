@@ -12,23 +12,30 @@ using UnityEngine.UI;
 public enum PlayerColor {Red = 0, Yellow = 1, Purple = 2, Blue = 3}
 public class GameManager : MonoBehaviour {
     public int amountOfPlayers;
-    [SerializeField] private int _amountOfWorms = 5;
-    [SerializeField] private GameObject environment;
+    [SerializeField] private int amountOfWorms;
     private Nest[] _nests;
-    private Slider _slider;
-    private List<Player> _players;
-    private int _currentPlayer;
+    //private Slider _slider;
+    [SerializeField] private List<Player> _players;
+    // public List<Player> GetPlayers() {
+    //     return _players;
+    // }
+    [SerializeField] private Player _currentPlayer;
+    [SerializeField] private int _currentPlayerIntager;
     private TMP_Text _playerText;
     private List<Vector3> _spawnPoints;
+    private GameSettings settings;
     private void Awake() {
         _nests = FindObjectsOfType<Nest>();
-        _slider = FindObjectOfType<Slider>();
+        //_slider = FindObjectOfType<Slider>();
     }
 
-    
     private void Start() {
-        amountOfPlayers = (int)_slider.value;
+        settings = FindObjectOfType<GameSettings>();
+        if (!settings) return;
         
+        amountOfPlayers = settings.amountOfPlayers ;
+        amountOfWorms = settings.amountOfWorms;
+        StartGame();
     }
 
     private static GameManager _instance;
@@ -46,8 +53,17 @@ public class GameManager : MonoBehaviour {
         }
     }
 
-    public void NextPlayer(InputAction.CallbackContext context) {
-        _currentPlayer = (_currentPlayer + 1) % _players.Count;
+    public void NextPlayer() { // Add context for playaerinput later
+        _currentPlayerIntager = (_currentPlayerIntager + 1) % _players.Count;
+       _currentPlayer = _players[_currentPlayerIntager];
+    }
+
+    private void Update() {
+        if (Input.GetKeyDown(KeyCode.Space)) {
+            Debug.Log(_players[0].GetWorms()[0].GetColor());
+            NextPlayer();
+            
+        }
     }
 
     private static void GenerateSingleton() {
@@ -58,9 +74,9 @@ public class GameManager : MonoBehaviour {
     
 
     private void GenerateWorms() {
-        _spawnPoints = GetSpawnPoints(amountOfPlayers, _amountOfWorms);
+        _spawnPoints = GetSpawnPoints(amountOfPlayers, amountOfWorms);
         for (int i = 0; i < amountOfPlayers; i++) {
-            for (int j = 0; j < _amountOfWorms; j++) {
+            for (int j = 0; j < amountOfWorms; j++) {
                 
             }
         }
@@ -72,27 +88,25 @@ public class GameManager : MonoBehaviour {
     }
 
     public void StartGame() {
+        //var nests = InitializeNests();
         InitializePlayers();
-        InitializeNests();
-    }
-
-    private void InitializeNests() { // i'm retarded.... 
-        List<int> randomAssignment = new List<int>();
-        for (int i = 0; i < amountOfPlayers; i++) {
-            var rand = Random.Range(0, _nests.Length);
-            if (!randomAssignment.Contains(rand)) {
-                 randomAssignment.Add(rand);  
-            }
-            else {
-                i--;
-            }
-        }
         
     }
 
-    private void InitializePlayers() {
+    private void InitializePlayers() { // messy.. 
+        //var randomAssignment = new List<int>();
+        // for (var i = 0; i < amountOfPlayers; i++) {
+        //     var rand = Random.Range(0, _nests.Length);
+        //     if (!randomAssignment.Contains(rand)) {
+        //         randomAssignment.Add(rand);  
+        //     }
+        //     else {
+        //         i--;
+        //     }
+        // }
+        
         for (int i = 0; i < amountOfPlayers; i++) {
-            _players.Add(new Player((PlayerColor)i));
+            _players.Add(new Player((PlayerColor)i, _nests[i], amountOfWorms));
         }
     }
 
