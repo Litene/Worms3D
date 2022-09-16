@@ -106,7 +106,7 @@ public class GameManager : MonoBehaviour {
             for (int i = 0; i < amountOfWorms; i++) {
                 if (nest.Owner.prefab == null) continue;
                 var spawnPoint = nest.GetRandomSpawnPoint();
-                var worm = Instantiate(nest.Owner.prefab, spawnPoint.position + SpawnOffset, spawnPoint.rotation, Utility.GetCorrectSpawnParent(nest.Owner.color));
+                var worm = Instantiate(nest.Owner.prefab, spawnPoint.position + SpawnOffset, nest.Owner.prefab.transform.rotation, Utility.GetCorrectSpawnParent(nest.Owner.color));
                 worm.GetComponent<PlayerController>().owner = nest.Owner; //cache somehow?
             }
         }
