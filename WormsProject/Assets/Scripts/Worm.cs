@@ -1,9 +1,18 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-public class Worm {
+public class Worm : MonoBehaviour {
     private Player _owner;
-    public Player GetWonder() {
+    public int index; // not used.
+    private PlayerController _controller;
+    private Camera cam;
+    private void Awake() {
+        _controller = GetComponent<PlayerController>();
+        cam = Camera.main;
+    }
+
+    public Player GetOwner() {
         return _owner;
     }
 
@@ -11,8 +20,13 @@ public class Worm {
     public PlayerColor GetColor() {
         return _color;
     }
-    public Worm(Player owner) {
-        this._owner = owner;
-        this._color = owner.color;
+    public void ActivateWorm() {
+        _controller.enabled = true;
+        cam.GetComponent<CamController>().SetTarget(this.gameObject.transform);
     }
+    
+    public void DeactivateWorm() {
+        _controller.enabled = false;
+    }
+    
 }
