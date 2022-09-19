@@ -31,7 +31,7 @@ public class GameManager : MonoBehaviour {
             _currentPlayer = value;
         }
     }
-    [FormerlySerializedAs("_currentPlayerIntager")] [SerializeField] private int _currentPlayerIndex;
+    [SerializeField] private int _currentPlayerIndex;
     private TMP_Text _playerText;
     private List<Vector3> _spawnPoints;
     private GameSettings _settings;
@@ -59,25 +59,24 @@ public class GameManager : MonoBehaviour {
             return _instance;
         }
     }
-    public void NextPlayer(InputAction.CallbackContext context) {
-        if (context.performed) {
+    public void NextPlayer() { // listen to key new system
+         
             _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Count;
             CurrentPlayer = _players[_currentPlayerIndex];
             foreach (var worm in CurrentPlayer._worms) {
-                worm.DeactivateWorm();
+                //worm.DeactivateWorm();
             }
-        }
+        
     }
 
-    public void NextWorm(InputAction.CallbackContext context) {
-        if (context.performed) {
-            CurrentPlayer.NextWorm(false);
-        }
+    public void NextWorm() { // listen to key
+        Debug.Log("called");
+        CurrentPlayer.NextWorm(false);
     }
     private void Update() {
         //This is to be removed
         if (Input.GetKeyDown(KeyCode.Space)) {
-            Debug.Log(Utility.GetCorrectPrefab(PlayerColor.Red).name);
+            //Debug.Log(Utility.GetCorrectPrefab(PlayerColor.Red).name);
             //NextPlayer();
         }
     }
