@@ -1,37 +1,187 @@
 using System;
 using UnityEngine;
 using System.Collections;
+using Unity.VisualScripting;
 
 
+public enum LookMode {
+    ThirdPerson,
+    FirstPerson
+};
 
 public class CameraManager : MonoBehaviour {
     private Vector3 _cameraFollowVel = Vector3.zero;
-    private float _smoothTime = 0.2f;
-    private Transform _currentTarget;
+    public bool CameraIsPanning;
 
-    private Transform CurrentTarget { // both are calling currentTarget; this needs to pass worm and not player. 
-        get { return _currentTarget; }
-        set {
-            if (_currentTarget != value) {
-                StartCoroutine(CameraPan(value));
-            }
-            _currentTarget = value;
+    private float _smoothTime = 0.2f;
+    private float _cameraLerpTime = 10f;
+
+    //private Transform _currentTarget;
+    private Vector3 _thirdPositionOffset = new Vector3(0f, 2f, -6f);
+    private Quaternion _thirdRotation;
+    private Vector3 _firstPositionOffset = new Vector3(0f, 0.6f, 0.25f);
+    [SerializeField] private Transform _firstPersonView;
+    [SerializeField] private Transform _thirdPersonView;
+    public Transform _currentView;
+    public LookMode lookMode;
+
+    public float LookAngle;
+    public float pivotAngle;
+    private float _mouseXInput;
+    private float _mouseYInput;
+    private float _cameraLookSpeed = 0.2f;
+    private float _minimumPivot = -35f;
+    private float _maximumPivot = 35f;
+    private float _defaultPos;
+    private Vector3 rotation;
+    private Quaternion targetRotation;
+    private float _cameraCollisionRadius = 0.2f;
+    public LayerMask CollisionLayers;
+    private float _cameraCollisionOffset = 0.2f;
+    private float _minimumColisionOffset = 0.2f;
+    private Vector3 _cameraVectorPos;
+    private Transform _currentTarget;
+    private Vector3 _thirdPersonPanValue = new Vector3(15f, 0f, 0f);
+    private Vector3 _firstPersonPanValue = Vector3.zero; // jumps to much
+    private Transform _cameraTransform;
+    //private Transform _mainCamTransform;
+
+    private void Awake() {
+        _firstPersonView = transform.Find("FirstPersonPivot");
+        _thirdPersonView = transform.Find("ThirdPersonPivot");
+        _cameraTransform = Camera.main.transform;
+        _currentView = _cameraTransform.parent;
+        _defaultPos = _cameraTransform.localPosition.z;
+    }
+
+    private void Start() {
+        _thirdPersonView.position = _thirdPositionOffset;
+        _firstPersonView.position = _firstPositionOffset;
+        _thirdRotation = _thirdPersonView.rotation;
+        _cameraTransform.localEulerAngles = _thirdPersonPanValue;
+    }
+
+    public void SwapCameraMode() { // glitchy solution, lerp towards all values here.. good for now. 
+        pivotAngle = 0;
+        if (_cameraTransform.parent == _firstPersonView) {
+            _cameraTransform.parent = _thirdPersonView;
+            _currentView = _thirdPersonView;
+            _cameraTransform.localEulerAngles = _thirdPersonPanValue;
+            _thirdPersonView.localEulerAngles = Vector3.zero;
+            lookMode = LookMode.ThirdPerson;
+        }
+        else {
+            _cameraTransform.parent = _firstPersonView;
+            _currentView = _firstPersonView;
+            _cameraTransform.localEulerAngles = _firstPersonPanValue;
+            _firstPersonView.localEulerAngles = Vector3.zero;
+            lookMode = LookMode.FirstPerson;
+        }
+
+        //transform.rotation = _thirdRotation;
+        
+        if (!CameraIsPanning) {
+            StartCoroutine(CameraPan());
         }
     }
-    
-    public void FollowTarget(Transform _currentTarget) {
-        if (_currentTarget == null) return;
-        
-        Vector3 targetPos = Vector3.SmoothDamp(transform.position, _currentTarget.position, ref _cameraFollowVel, _smoothTime);
+
+    public void ResetCamera() {
+        _currentView = _thirdPersonView;
+        _cameraTransform.parent = _thirdPersonView;
+        lookMode = LookMode.ThirdPerson;
+
+        _cameraTransform.localEulerAngles = _thirdPersonPanValue;
+        pivotAngle = 0;
+        if (!CameraIsPanning) {
+            StartCoroutine(CameraPan());
+        }
+    }
+
+    // ResetRotation() {
+    //     
+    // }
+
+    public void FollowTarget(Transform currentTarget) {
+        if (currentTarget == null || CameraIsPanning) return;
+
+        if (_currentTarget != currentTarget) {
+            _currentTarget = currentTarget;
+        }
+
+        Vector3 targetPos = Vector3.zero;
+
+        if (_currentView == _firstPersonView) {
+            targetPos = currentTarget.position;
+        }
+        else {
+            targetPos = Vector3.SmoothDamp(transform.position, currentTarget.position, ref _cameraFollowVel,
+                _smoothTime);
+        }
 
         transform.position = targetPos;
     }
 
-    private IEnumerator CameraPan(Transform target) {
-        transform.position = target.position;
-        yield return null;
+    public void SetRotationCamera(Vector2 input) {
+        _mouseYInput = input.y;
+        _mouseXInput = input.x;
     }
 
+    public void RotateCamera() {
+        if (CameraIsPanning) return;
+        if (lookMode == LookMode.FirstPerson) {
+            //_currentView.rotation = transform.rotation;
+            pivotAngle = pivotAngle - (_mouseYInput * _cameraLookSpeed);
+            pivotAngle = Mathf.Clamp(pivotAngle, _minimumPivot, _maximumPivot);
+            rotation = Vector3.zero;
+            rotation.x = pivotAngle;
+            targetRotation = Quaternion.Euler(rotation);
+            _currentView.localRotation = targetRotation;
+        }
+        else {
+            transform.LookAt(_currentTarget);
+            //_currentView.Rotate(new Vector3(-30, transform.rotation.y, transform.rotation.z));
+            //_firstPersonView.transform.rotation = Quaternion.Euler(Vector3.zero);
+        }
 
+        LookAngle = LookAngle + (_mouseXInput * _cameraLookSpeed);
+        rotation = Vector3.zero;
+        rotation.y = LookAngle;
+        targetRotation = Quaternion.Euler(rotation);
+        transform.rotation = targetRotation;
+
+    }
+
+    private IEnumerator CameraPan() {
+        CameraIsPanning = true;
+        while (Mathf.Abs((_cameraTransform.position - _currentView.position).magnitude) >= 0.1f) {
+            _cameraTransform.position =
+                Vector3.Lerp(_cameraTransform.position, _currentView.position, _cameraLerpTime * Time.deltaTime);
+            //_currentView.LookAt(_currentTarget);
+            yield return new WaitForEndOfFrame();
+        }
+
+        CameraIsPanning = false;
+    }
+
+    public void HandleCameraCollision() {
+        if (lookMode == LookMode.FirstPerson) return;
+
+        float targetPos = _defaultPos;
+        RaycastHit hit;
+        Vector3 direction = _cameraTransform.position - _thirdPersonView.position;
+        direction.Normalize();
+
+        if (Physics.SphereCast(_currentView.transform.position, _cameraCollisionRadius, direction, out hit,
+                Mathf.Abs(targetPos), CollisionLayers)) {
+            float distance = Vector3.Distance(_currentView.position, hit.point);
+            targetPos = -(distance - _cameraCollisionOffset);
+        }
+
+        if (Mathf.Abs(targetPos) < _minimumColisionOffset) {
+            targetPos = targetPos - _minimumColisionOffset;
+        }
+
+        _cameraVectorPos.z = Mathf.Lerp(_cameraTransform.localPosition.z, targetPos, 0.2f);
+        _cameraTransform.localPosition = _cameraVectorPos;
+    }
 }
-

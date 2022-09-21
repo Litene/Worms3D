@@ -11,7 +11,7 @@ public class Worm : MonoBehaviour {
     //private float _smoothTime = 0.3f;
     private Player _owner;
     public int index; // not used.
-    private PlayerController _controller;
+    public PlayerController _controller;
     //private Camera cam;
     // [SerializeField] private PlayerInput _playerInput;
     // [SerializeField] private InputAction _playerMovement;

@@ -8,7 +8,6 @@ using Unity.VisualScripting;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
-
 public enum PlayerColor {
     Red = 0,
     Yellow = 1,
@@ -23,6 +22,7 @@ public class GameManager : MonoBehaviour {
     public Nest[] Nests { get; private set; }
     [SerializeField] private List<Player> _players;
     private Player _currentPlayer;
+    private CameraManager _camManager;
 
     public Player CurrentPlayer { // wait wat?
         get { return _currentPlayer; }
@@ -37,6 +37,7 @@ public class GameManager : MonoBehaviour {
     private GameSettings _settings;
     private void Awake() {
         Nests = FindObjectsOfType<Nest>();
+        _camManager = FindObjectOfType<CameraManager>();
     }
     private void Start() {
         _settings = FindObjectOfType<GameSettings>();
@@ -60,25 +61,16 @@ public class GameManager : MonoBehaviour {
         }
     }
     public void NextPlayer() { // listen to key new system
-         
-            _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Count;
+        _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Count;
             CurrentPlayer = _players[_currentPlayerIndex];
             foreach (var worm in CurrentPlayer._worms) {
-                //worm.DeactivateWorm();
+                worm._controller.InitializePlayerTurn();
             }
-        
+            _camManager.ResetCamera();
     }
 
     public void NextWorm() { // listen to key
-        Debug.Log("called");
         CurrentPlayer.NextWorm(false);
-    }
-    private void Update() {
-        //This is to be removed
-        if (Input.GetKeyDown(KeyCode.Space)) {
-            //Debug.Log(Utility.GetCorrectPrefab(PlayerColor.Red).name);
-            //NextPlayer();
-        }
     }
     private static void GenerateSingleton() {
         GameObject gameManagerObject = new GameObject("GameManager");

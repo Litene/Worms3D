@@ -13,6 +13,33 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Camera",
+                    "type": "PassThrough",
+                    "id": "8b69eb5a-dd4b-4f61-8176-2f7d8c31e1e1",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Jump",
+                    "type": "PassThrough",
+                    "id": "d74c0ed5-415a-4e19-a7b2-c0ca8c45e836",
+                    "expectedControlType": "Integer",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Reload",
+                    "type": "Button",
+                    "id": "646d8c50-0c12-47d4-ba3a-c46f758ca8b0",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -125,6 +152,50 @@
                     "action": "Movement",
                     "isComposite": false,
                     "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "02fba91a-096d-4782-9027-0cb985389688",
+                    "path": "<Mouse>/delta",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Camera",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "2D Vector",
+                    "id": "700c86b5-82e9-4554-a799-6ea6d8b38730",
+                    "path": "2DVector(mode=2)",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Camera",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "78fd9dd8-5464-4a2e-ab3b-d1db89b1583b",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e2a3de69-87bb-4d1c-a10f-655ab7221304",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Reload",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
@@ -146,7 +217,7 @@
                 {
                     "name": "",
                     "id": "6982c6d8-b0da-4c25-8daf-b896aa2df99e",
-                    "path": "<Keyboard>/space",
+                    "path": "<Keyboard>/c",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -179,6 +250,90 @@
                     "processors": "",
                     "groups": "",
                     "action": "NextWorm",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "SwapCameraMode",
+            "id": "5bae1e3a-aa2a-4b76-b990-22b46edd2236",
+            "actions": [
+                {
+                    "name": "SwapCameraMode",
+                    "type": "Button",
+                    "id": "a95605a7-269e-4b97-9b57-79bafa093367",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "4ae858b6-929c-4ce1-ae35-876a93231943",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SwapCameraMode",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "SpaceAction",
+            "id": "7a58bc9a-111b-4d95-8f03-87d220286629",
+            "actions": [
+                {
+                    "name": "Space",
+                    "type": "Button",
+                    "id": "f172f460-2054-4344-a71f-eea01b0331e5",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "6f1d9cca-40a8-40b5-a7c4-c0d78298184a",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Space",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "PlayerSequence",
+            "id": "94c6f4ea-16d8-4355-8e68-b1d250da8f64",
+            "actions": [
+                {
+                    "name": "EnterAction",
+                    "type": "Button",
+                    "id": "c546e41c-ce19-4cb3-8b2e-74752885072b",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "8ba70402-e10a-45ec-8dd5-f065df8e1de9",
+                    "path": "<Keyboard>/enter",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "EnterAction",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
