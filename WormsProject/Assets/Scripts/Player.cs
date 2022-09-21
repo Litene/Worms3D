@@ -21,8 +21,8 @@ public class Player {
     public void NextWorm(bool playerSwap) {
        // _worms[_currentWormIndex].DeactivateWorm();
         if (playerSwap) {
-            _worms[_currentWormIndex].ActivateWorm();
             _currentWorm = _worms[_currentWormIndex];
+            _worms[_currentWormIndex].ActivateWorm();
             return;
         }
         _currentWormIndex = (_currentWormIndex + 1) % _worms.Count;

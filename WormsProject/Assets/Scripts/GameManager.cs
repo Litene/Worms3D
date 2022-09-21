@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine.InputSystem;
 using System.Linq;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
@@ -63,10 +64,15 @@ public class GameManager : MonoBehaviour {
     public void NextPlayer() { // listen to key new system
         _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Count;
             CurrentPlayer = _players[_currentPlayerIndex];
-            foreach (var worm in CurrentPlayer._worms) {
-                worm._controller.InitializePlayerTurn();
-            }
+            InitializeWorms();
             _camManager.ResetCamera();
+    }
+
+    private void InitializeWorms() {
+        foreach (var worm in CurrentPlayer._worms) {
+            worm._controller.InitializePlayerTurn();
+        }
+        _currentPlayer.NextWorm(true);
     }
 
     public void NextWorm() { // listen to key
@@ -111,6 +117,7 @@ public class GameManager : MonoBehaviour {
         }
 
         CurrentPlayer = _players[_currentPlayerIndex];
+        InitializeWorms();
     }
 
     private void InitializePlayers() {

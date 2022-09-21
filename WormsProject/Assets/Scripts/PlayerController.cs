@@ -64,9 +64,13 @@ public class PlayerController : MonoBehaviour {
     private void DefaultToWalkingCheck() { // all worms need to change enum
         if (owner._worms.Count <= 1) {
             if (turn == PlayerTurn.ChooseWorm) {
+                Debug.Log("yo");
                 turn = PlayerTurn.Walk;
                 InputManager.Instance.EnableMovement();
             }
+        }
+        else {
+            InputManager.Instance.DisableMovement();
         }
     }
 

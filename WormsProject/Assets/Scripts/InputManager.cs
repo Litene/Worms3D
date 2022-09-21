@@ -4,7 +4,7 @@ using UnityEngine;
 public class InputManager : MonoBehaviour {
     private PlayerControls _controls;
     private Vector2 _movementInput;
-    private PlayerController _currentController;
+    [SerializeField] private PlayerController _currentController;
     private Vector2 _cameraInput;
     [SerializeField] private CameraManager _camManager;
    
@@ -47,12 +47,7 @@ public class InputManager : MonoBehaviour {
         _controls.PlayerMovement.Camera.performed += val => _camManager.SetRotationCamera(val.ReadValue<Vector2>());
         _controls.PlayerMovement.Jump.performed += val => _currentController.SetJumpValue();
         _controls.Enable();
-        DisableMovement();
 
-    }
-
-    private void Start() {
-        DisableMovement();
     }
 
     public void EnableMovement() {
