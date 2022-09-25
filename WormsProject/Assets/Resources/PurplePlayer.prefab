@@ -37,6 +37,7 @@ Transform:
   m_Children:
   - {fileID: 7159377721674748209}
   - {fileID: 4648050862406772420}
+  - {fileID: 8447880120193423464}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -169,6 +170,11 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
+  _groundChild: {fileID: 0}
+  turn: 0
+  startJumping: 0
+  jumpPower: 0
+  walkTimer: 0
 --- !u!114 &2771210127580483537
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -182,7 +188,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _movementSpeed: 0
+  _currentWeapon: {fileID: 0}
+  AllWeapons: []
+  pBullet: {fileID: 6544673611644916373, guid: 415ff8800843b4c43ab033edd6d1dfac, type: 3}
   index: 0
+  _controller: {fileID: 0}
 --- !u!54 &906174816274494541
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -199,6 +209,37 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 112
   m_CollisionDetection: 0
+--- !u!1 &4799149514872157736
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8447880120193423464}
+  m_Layer: 0
+  m_Name: WeaponMuscle
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8447880120193423464
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4799149514872157736}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.02, y: 0.698, z: 0.92}
+  m_LocalScale: {x: 0.40028, y: 0.19372036, z: 0.7246056}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2612560325401801408}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6231835522186632664
 GameObject:
   m_ObjectHideFlags: 0

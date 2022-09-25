@@ -29,9 +29,9 @@ public class CameraManager : MonoBehaviour {
     public float pivotAngle;
     private float _mouseXInput;
     private float _mouseYInput;
-    private float _cameraLookSpeed = 0.2f;
+    private float _cameraLookSpeed = 0.1f;
     private float _minimumPivot = -35f;
-    private float _maximumPivot = 35f;
+    private float _maximumPivot = 45f;
     private float _defaultPos;
     private Vector3 rotation;
     private Quaternion targetRotation;
@@ -44,7 +44,7 @@ public class CameraManager : MonoBehaviour {
     private Vector3 _thirdPersonPanValue = new Vector3(15f, 0f, 0f);
     private Vector3 _firstPersonPanValue = Vector3.zero; // jumps to much
     private Transform _cameraTransform;
-    //private Transform _mainCamTransform;
+    //public Quaternion _currentRotation;//private Transform _mainCamTransform;
 
     private void Awake() {
         _firstPersonView = transform.Find("FirstPersonPivot");
@@ -59,6 +59,11 @@ public class CameraManager : MonoBehaviour {
         _firstPersonView.position = _firstPositionOffset;
         _thirdRotation = _thirdPersonView.rotation;
         _cameraTransform.localEulerAngles = _thirdPersonPanValue;
+       // _currentRotation = transform.rotation * _firstPersonView.rotation;
+    }
+
+    public Vector3 GetCurrentEulerRotation() {
+        return new Vector3(_firstPersonView.localEulerAngles.x,transform.localEulerAngles.y, 0);
     }
 
     public void SwapCameraMode() { // glitchy solution, lerp towards all values here.. good for now. 

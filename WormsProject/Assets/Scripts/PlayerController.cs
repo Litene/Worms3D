@@ -10,6 +10,7 @@ using UnityEngine.InputSystem;
 public enum PlayerTurn {
     ChooseWorm,
     Walk,
+    SelectWeapon,
     Shoot,
     EndTurn
 }
@@ -43,6 +44,7 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private bool startJumping;
     [SerializeField] private float jumpPower;
     [SerializeField] private float walkTimer;
+    private bool _canWalk;
 
     private void Awake() {
         _rb = GetComponent<Rigidbody>();
@@ -59,14 +61,16 @@ public class PlayerController : MonoBehaviour {
 
     public void InitializePlayerTurn() { // fill with logic for the player?
         DefaultToWalkingCheck();
+        
+        _canWalk = true;
     }
     
-    private void DefaultToWalkingCheck() { // all worms need to change enum
+    private void DefaultToWalkingCheck() { // this is run too early, latestart could solve it but its an uggly solution.
         if (owner._worms.Count <= 1) {
             if (turn == PlayerTurn.ChooseWorm) {
-                Debug.Log("yo");
                 turn = PlayerTurn.Walk;
                 InputManager.Instance.EnableMovement();
+                UIManager.Instance.ActivateMiddleTextImage(turn);
             }
         }
         else {
@@ -84,15 +88,26 @@ public class PlayerController : MonoBehaviour {
             case PlayerTurn.ChooseWorm:
                 InputManager.Instance.EnableMovement();
                 turn = PlayerTurn.Walk;
+                _canWalk = true;
+                UIManager.Instance.ActivateMiddleTextImage(turn);
                 break;
             case PlayerTurn.Walk:
                 InputManager.Instance.DisableMovement();
                 _cameraManager.SwapCameraMode();
-                turn = PlayerTurn.Shoot;
+                turn = PlayerTurn.SelectWeapon;
+                UIManager.Instance.ActivateMiddleTextImage(turn);
+                break;
+            case PlayerTurn.SelectWeapon:
+                UIManager.Instance.ToggleAim(turn);
+                turn = PlayerTurn.Shoot; 
+                UIManager.Instance.ActivateMiddleTextImage(turn);
                 break;
             case PlayerTurn.Shoot:
                 GameManager.Instance.NextPlayer();
                 turn = PlayerTurn.ChooseWorm;
+                UIManager.Instance.ToggleAim(turn);
+                UIManager.Instance.ActivateMiddleTextImage(turn);
+                //DefaultToWalkingCheck();
                 break;
             default:
                 break;
@@ -103,6 +118,12 @@ public class PlayerController : MonoBehaviour {
         switch (turn) {
             case PlayerTurn.ChooseWorm:
                 GameManager.Instance.NextWorm();
+                break;
+            case PlayerTurn.SelectWeapon:
+                owner._currentWorm.ChangeCurrentWeapon(false);
+                break;
+            case PlayerTurn.Shoot:
+                owner._currentWorm.ShootCurrentWeapon(); // needs to be passthrough... Toggle zoom? 
                 break;
             default:
                 break;
@@ -115,7 +136,6 @@ public class PlayerController : MonoBehaviour {
         _moveDir.Normalize();
         _moveDir.y = 0; // clumsy solution. 
         _moveDir = _moveDir * _movementSpeed;
-        //Debug.Log(_moveDir);
         Vector3 movementVelocity = _moveDir;
         _rb.velocity = movementVelocity;
     }
@@ -125,14 +145,20 @@ public class PlayerController : MonoBehaviour {
         HandleRotation();
     }
 
+    
+    
     private void FixedUpdate() {
         GroundCheck();
-        if (!(owner == GameManager.Instance.CurrentPlayer) || _cameraManager.CameraIsPanning ||
-            _cameraManager.lookMode == LookMode.FirstPerson) {
+        if (!(owner == GameManager.Instance.CurrentPlayer) || _cameraManager.CameraIsPanning) {
             StopTransform();
             return;
         }
-
+        
+        if (_cameraManager.lookMode == LookMode.FirstPerson || !_canWalk) {
+            HandleRotation();
+            return;
+        }
+        
         if (!IsGrounded) return;
 
         HandleAllMovement();
@@ -167,23 +193,23 @@ public class PlayerController : MonoBehaviour {
 
             transform.rotation = playerRot;
         }
-        else {
-            owner._currentWorm.transform.rotation = 
-                Quaternion.Euler( new Vector3(owner._currentWorm.transform.rotation.x,
-                _cameraManager.transform.rotation.y,
-                owner._currentWorm.transform.rotation.z)); // this isn't working needs to rotate.
+        else { // WATTAFAKKA
+                 transform.localEulerAngles = new Vector3(transform.localRotation.x,
+                _cameraManager.GetCurrentEulerRotation().y,
+                transform.localRotation.z); // this isn't working needs to rotate.
         }
     }
 
     private void Update() {
-        if (_moveDir != Vector3.zero) {
+        if (turn == PlayerTurn.Walk && _moveDir != Vector3.zero && _canWalk) {
             if (walkTimer > 0) {
                 walkTimer -= Time.deltaTime;
             }
-            else {
-                turn = PlayerTurn.Shoot;
+            else if(turn == PlayerTurn.Walk) {
+                // this cant be done enterACtion, this is called once in a while, every fifth second needs a gaurd cloud for starting timer. 
                 InputManager.Instance.DisableMovement();
-                StopTransform();
+                EnterAction();
+                _canWalk = false;
                 walkTimer = 5;
             }
         }

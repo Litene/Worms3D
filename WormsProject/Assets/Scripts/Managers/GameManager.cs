@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
@@ -64,11 +65,12 @@ public class GameManager : MonoBehaviour {
     public void NextPlayer() { // listen to key new system
         _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Count;
             CurrentPlayer = _players[_currentPlayerIndex];
-            InitializeWorms();
+            StartCoroutine(InitializeWorms());
             _camManager.ResetCamera();
     }
 
-    private void InitializeWorms() {
+    private IEnumerator InitializeWorms() {
+        yield return new WaitForEndOfFrame();
         foreach (var worm in CurrentPlayer._worms) {
             worm._controller.InitializePlayerTurn();
         }
@@ -80,7 +82,8 @@ public class GameManager : MonoBehaviour {
     }
     private static void GenerateSingleton() {
         GameObject gameManagerObject = new GameObject("GameManager");
-        DontDestroyOnLoad(gameManagerObject);
+        gameManagerObject.transform.parent = GameObject.Find("Managers").transform;
+        //DontDestroyOnLoad(gameManagerObject);
         _instance = gameManagerObject.AddComponent<GameManager>();
     }
     public void AssignPlayerToNest() {
@@ -117,7 +120,7 @@ public class GameManager : MonoBehaviour {
         }
 
         CurrentPlayer = _players[_currentPlayerIndex];
-        InitializeWorms();
+        StartCoroutine(InitializeWorms());
     }
 
     private void InitializePlayers() {

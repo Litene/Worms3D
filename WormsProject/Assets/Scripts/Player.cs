@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
+
+// if I add AOE damage I need to check if it is the currnetworm and if it is, call next. 
 [System.Serializable]
 public class Player {
     public PlayerColor color;
@@ -13,6 +16,8 @@ public class Player {
     public List<Worm> GetWorms() {
         return _worms;
     }
+
+    
     public Player(PlayerColor color, int wormAmount) { // this is weird
         this.color = color;
         //this.SpawnSlot = spawnSlot;
