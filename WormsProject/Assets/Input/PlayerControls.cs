@@ -67,7 +67,7 @@ public partial class @PlayerControls : IInputActionCollection2, IDisposable
                     ""name"": ""Shoot"",
                     ""type"": ""PassThrough"",
                     ""id"": ""7eabbedb-ecd2-4db7-8d15-dd4e7e7f6a91"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": ""Axis"",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false

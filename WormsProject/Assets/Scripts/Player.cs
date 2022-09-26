@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -24,7 +25,10 @@ public class Player {
         prefab = Utility.GetCorrectPrefab(color);
     }
     public void NextWorm(bool playerSwap) {
-       // _worms[_currentWormIndex].DeactivateWorm();
+        if (GameManager.Instance.GameOver) {
+            return;
+        }
+        // _worms[_currentWormIndex].DeactivateWorm();
         if (playerSwap) {
             _currentWorm = _worms[_currentWormIndex];
             _worms[_currentWormIndex].ActivateWorm();

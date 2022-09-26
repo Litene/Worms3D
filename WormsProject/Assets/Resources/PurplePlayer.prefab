@@ -189,6 +189,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _movementSpeed: 0
   _currentWeapon: {fileID: 0}
+  _ammo: 0
   AllWeapons: []
   pBullet: {fileID: 6544673611644916373, guid: 415ff8800843b4c43ab033edd6d1dfac, type: 3}
   index: 0
@@ -282,7 +283,6 @@ GameObject:
   - component: {fileID: 7159377721674748209}
   - component: {fileID: 7451675962794904059}
   - component: {fileID: 6815270633691886853}
-  - component: {fileID: 2902010604902298448}
   m_Layer: 3
   m_Name: Nose
   m_TagString: Untagged
@@ -355,16 +355,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &2902010604902298448
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7514441798854066526}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}

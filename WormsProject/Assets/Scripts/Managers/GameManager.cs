@@ -25,22 +25,27 @@ public class GameManager : MonoBehaviour {
     [SerializeField] private List<Player> _players;
     private Player _currentPlayer;
     private CameraManager _camManager;
+    public bool GameOver = false;
 
-    public Player CurrentPlayer { // wait wat?
+    public Player CurrentPlayer {
+        // wait wat?
         get { return _currentPlayer; }
         set {
-            value.NextWorm(true);
+            //value.NextWorm(true);
             _currentPlayer = value;
         }
     }
+
     [SerializeField] private int _currentPlayerIndex;
     private TMP_Text _playerText;
     private List<Vector3> _spawnPoints;
     private GameSettings _settings;
+
     private void Awake() {
         Nests = FindObjectsOfType<Nest>();
         _camManager = FindObjectOfType<CameraManager>();
     }
+
     private void Start() {
         _settings = FindObjectOfType<GameSettings>();
         if (!_settings) return;
@@ -50,7 +55,9 @@ public class GameManager : MonoBehaviour {
         SpawnOffset = new Vector3(0, 0.75f, 0);
         StartGame();
     }
+
     private static GameManager _instance;
+
     public static GameManager Instance {
         get {
             if (_instance == null) {
@@ -59,14 +66,17 @@ public class GameManager : MonoBehaviour {
                     GenerateSingleton();
                 }
             }
+
             return _instance;
         }
     }
-    public void NextPlayer() { // listen to key new system
+
+    public void NextPlayer() {
+        // listen to key new system
         _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Count;
-            CurrentPlayer = _players[_currentPlayerIndex];
-            StartCoroutine(InitializeWorms());
-            _camManager.ResetCamera();
+        CurrentPlayer = _players[_currentPlayerIndex];
+        StartCoroutine(InitializeWorms());
+        _camManager.ResetCamera();
     }
 
     private IEnumerator InitializeWorms() {
@@ -74,18 +84,22 @@ public class GameManager : MonoBehaviour {
         foreach (var worm in CurrentPlayer._worms) {
             worm._controller.InitializePlayerTurn();
         }
+
         _currentPlayer.NextWorm(true);
     }
 
-    public void NextWorm() { // listen to key
+    public void NextWorm() {
+        // listen to key
         CurrentPlayer.NextWorm(false);
     }
+
     private static void GenerateSingleton() {
         GameObject gameManagerObject = new GameObject("GameManager");
         gameManagerObject.transform.parent = GameObject.Find("Managers").transform;
         //DontDestroyOnLoad(gameManagerObject);
         _instance = gameManagerObject.AddComponent<GameManager>();
     }
+
     public void AssignPlayerToNest() {
         List<Nest> RandomizedList = Nests.OrderBy(player => Random.Range(0, Nests.Length)).ToList();
         for (int i = 0; i < _players.Count; i++) {
@@ -94,11 +108,38 @@ public class GameManager : MonoBehaviour {
 
         for (int i = 0; i < Nests.Length; i++) {
             if (Nests[i].Owner == null) {
-                Nests[i].enabled = false;  
+                Nests[i].enabled = false;
                 Nests[i] = null;
-            } 
+            }
         }
-        
+    }
+
+    public void RemoveDeadPlayers() {
+        //  call at a appropriate place
+        List<Player> playerToRemove = new List<Player>();
+        foreach (var player in _players) {
+            Debug.Log($"player: {player}, has wormcount: {player._worms.Count}");
+            if (player._worms.Count <= 0) {
+                playerToRemove.Add(player);
+            }
+        }
+
+        foreach (var player in playerToRemove) {
+            _players.Remove(player);
+        }
+
+        WinCondition();
+    }
+
+    public void WinCondition() {
+        if (_players.Count == 1) {
+            GameOver = true;
+            Debug.Log($" player has just won. {_players[0]}");
+        }
+        else if (_players.Count == 0) {
+            GameOver = true;
+            // even all died
+        }
     }
 
     private void GenerateWorms() {
@@ -106,11 +147,14 @@ public class GameManager : MonoBehaviour {
             for (int i = 0; i < amountOfWorms; i++) {
                 if (nest.Owner.prefab == null) continue;
                 var spawnPoint = nest.GetRandomSpawnPoint();
-                var worm = Instantiate(nest.Owner.prefab, spawnPoint.position + SpawnOffset, nest.Owner.prefab.transform.rotation, Utility.GetCorrectSpawnParent(nest.Owner.color));
+                var worm = Instantiate(nest.Owner.prefab, spawnPoint.position + SpawnOffset,
+                    nest.Owner.prefab.transform.rotation, Utility.GetCorrectSpawnParent(nest.Owner.color));
                 worm.GetComponent<PlayerController>().owner = nest.Owner; //cache somehow?
+                worm.GetComponent<Worm>()._owner = nest.Owner;
             }
         }
     }
+
     public void StartGame() {
         InitializePlayers();
         AssignPlayerToNest();
@@ -128,5 +172,4 @@ public class GameManager : MonoBehaviour {
             _players.Add(new Player((PlayerColor)i, amountOfWorms));
         }
     }
-    
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.PlayerLoop;
@@ -18,9 +19,10 @@ public class Worm : MonoBehaviour, IDamageable {
     private ObjectPool<GameObject> _pool;
     private float _bulletUpTime = 5;
     private Collider _collider;
-    private Player _owner;
+    [SerializeField] public Player _owner;
     public int index;
     public PlayerController _controller;
+    private bool _chargingWeapon;
     private bool _shooting;
 
     private void Awake() {
@@ -40,7 +42,7 @@ public class Worm : MonoBehaviour, IDamageable {
     private void Start() {
         UIManager.Instance.ActivateMiddleTextImage(_controller.turn);
         Health = new HealthSystem(100);
-        ChangeCurrentWeapon(true);
+        //ChangeCurrentWeapon(true);
     }
 
     public Player GetOwner() {
@@ -50,37 +52,57 @@ public class Worm : MonoBehaviour, IDamageable {
     public void ChangeCurrentWeapon(bool initialCall) {
         if (initialCall) {
             _currentWeapon = AllWeapons[_currentWeaponIndex];
-            ResetWeapon();
+            ResetWeapon("initialcCallCurentWeapon");
             return;
         }
 
         _currentWeaponIndex = (_currentWeaponIndex + 1) % AllWeapons.Count;
         _currentWeapon = AllWeapons[_currentWeaponIndex];
-        ResetWeapon();
+        ResetWeapon("End of ChangeCurrentWep");
     }
 
-    public void ResetWeapon() {
+    public void ResetWeapon(string callingMethod) {
+        // this needs to be called on correct worm, not all worms.
         if (_currentWeapon != null) {
+            //_currentWeapon.PProjectile.GetComponent<Damager>().SetDamage(_currentWeapon.Damage);
             _ammo = _currentWeapon.MaxAmmo;
         }
 
-        _shooting = false;
+        _chargingWeapon = false;
     }
 
-    public void ShootCurrentWeapon() {
-        if (_controller.turn == PlayerTurn.Shoot) {
-            _shooting = !_shooting;
-            
-            
-            // var poolObject = _pool.Get();
-            // Physics.IgnoreCollision(poolObject.GetComponent<Collider>(),
-            //     _collider); // cache this
-            // _currentWeapon.Shoot(_weaponMuscle, ref _ammo, poolObject,
-            //     _controller._cameraManager.GetCurrentEulerRotation());
-            // StartCoroutine(ClearPoolObject(_bulletUpTime, poolObject));
+    public void ShootCurrentWeapon(float pressValue) {
+        // now this is suscribed on button up, this needs to happen on button down for machine gun. 
+
+        _shooting = pressValue > 0.1f;
+        if (!(_controller.turn == PlayerTurn.Shoot)) {
+            return;
         }
+
+        _chargingWeapon = false;
+
+        // var poolObject = _pool.Get();
+        // Physics.IgnoreCollision(poolObject.GetComponent<Collider>(),
+        //     _collider); // cache this
+        // _currentWeapon.Shoot(_weaponMuscle, ref _ammo, poolObject,
+        //     _controller._cameraManager.GetCurrentEulerRotation());
+        // StartCoroutine(ClearPoolObject(_bulletUpTime, poolObject));
+        
+            // _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool,
+            //     _controller._cameraManager.GetCurrentEulerRotation() /*this is trash*/, this, _shootPower);
+        
     }
 
+    public void StartCharging() {
+        // weapon charge
+        if ((_controller.turn == PlayerTurn.Shoot)) {
+            _chargingWeapon = true;
+        }
+
+        // if (_currentWeapon is MachineGun) {
+        //     ShootCurrentWeapon();
+        // }
+    }
 
     private IEnumerator ClearPoolObject(float bulletUpTime, GameObject poolObject) {
         // rename if you can't implement through queue.
@@ -88,18 +110,40 @@ public class Worm : MonoBehaviour, IDamageable {
         _pool.Release(poolObject);
     }
 
-    private void Timers() { // remove?
+    private void Timers() {
+        // remove?
         //shootTimer += Time.deltaTime;
     }
 
     private void Update() {
-        if (!(_controller.turn == PlayerTurn.Shoot)) 
+        if (!(_controller.turn == PlayerTurn.Shoot))
             return;
-        
-        Debug.Log(_shooting);
-        
-        _currentWeapon.Shoot(_weaponMuscle,ref _ammo, _pool, _controller._cameraManager.GetCurrentEulerRotation() /*this is trash*/, this, _shooting);
-        
+
+        _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool,
+            _controller._cameraManager.GetCurrentEulerRotation() /*this is trash*/, this, _shooting);
+       
+        // if (_shooting) {
+        //     // if ((_currentWeapon is Sniper)) { // move logic to weapon?
+        //     //     _shootPower += Time.deltaTime * 10f;
+        //     //     _shootPower = Mathf.Clamp(_shootPower, (_currentWeapon as Sniper).MinimumShootPower,
+        //     //         (_currentWeapon as Sniper).MaximumShootPower); // this is a messy call
+        //     // }
+        //     if(_canShoot) {
+        //     }
+        // }
+        // else if (!_shooting && !_canShoot && (_currentWeapon is Sniper)) {
+        //     _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool,
+        //         _controller._cameraManager.GetCurrentEulerRotation() /*this is trash*/, this, _shooting, _canShoot);
+        //     _canShoot = true;
+        // }
+
+        // if (_chargingWeapon) {
+        //     if ((_currentWeapon is Sniper)) {
+        //         _shootPower += Time.deltaTime * 10f;
+        //         _shootPower = Mathf.Clamp(_shootPower, (_currentWeapon as Sniper).MinimumShootPower,
+        //             (_currentWeapon as Sniper).MaximumShootPower); // this is a messy call
+        //     }
+        // }
         //Timers(); // this doesn't work, need fucntionality directly in weapon. 
         // Debug.Log(shootTimer);
         // if (_shooting && !hasShot) {
@@ -117,6 +161,7 @@ public class Worm : MonoBehaviour, IDamageable {
 
 
     private PlayerColor _color;
+    private float _shootPower;
 
     public PlayerColor GetColor() {
         return _color;
@@ -124,7 +169,7 @@ public class Worm : MonoBehaviour, IDamageable {
 
     public void ActivateWorm() {
         InputManager.Instance.SetCurrentController(_controller);
-        ResetWeapon();
+        ChangeCurrentWeapon(true);
     }
 
 
@@ -134,12 +179,14 @@ public class Worm : MonoBehaviour, IDamageable {
         return gameObject;
     }
 
-    public void Die() {
-        _owner._worms.Remove(this);
+    public void Die(Worm worm) {
+        Debug.Log(worm._owner);
+        worm._owner._worms.Remove(worm);
         if (_owner._currentWorm == this) {
             GameManager.Instance.NextPlayer();
         }
 
-        Destroy(gameObject); // maybe a method in player that removes and destroys it. 
+        GameManager.Instance.RemoveDeadPlayers();
+        Destroy(worm.gameObject);
     }
 }

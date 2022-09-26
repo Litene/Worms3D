@@ -59,13 +59,15 @@ public class PlayerController : MonoBehaviour {
         walkTimer = 5;
     }
 
-    public void InitializePlayerTurn() { // fill with logic for the player?
+    public void InitializePlayerTurn() {
+        // fill with logic for the player?
         DefaultToWalkingCheck();
-        
+
         _canWalk = true;
     }
-    
-    private void DefaultToWalkingCheck() { // this is run too early, latestart could solve it but its an uggly solution.
+
+    private void DefaultToWalkingCheck() {
+        // this is run too early, latestart could solve it but its an uggly solution.
         if (owner._worms.Count <= 1) {
             if (turn == PlayerTurn.ChooseWorm) {
                 turn = PlayerTurn.Walk;
@@ -99,7 +101,7 @@ public class PlayerController : MonoBehaviour {
                 break;
             case PlayerTurn.SelectWeapon:
                 UIManager.Instance.ToggleAim(turn);
-                turn = PlayerTurn.Shoot; 
+                turn = PlayerTurn.Shoot;
                 UIManager.Instance.ActivateMiddleTextImage(turn);
                 break;
             case PlayerTurn.Shoot:
@@ -123,7 +125,7 @@ public class PlayerController : MonoBehaviour {
                 owner._currentWorm.ChangeCurrentWeapon(false);
                 break;
             case PlayerTurn.Shoot:
-                owner._currentWorm.ShootCurrentWeapon(); // needs to be passthrough... Toggle zoom? 
+                //owner._currentWorm.ShootCurrentWeapon(); // needs to be passthrough... Toggle zoom? 
                 break;
             default:
                 break;
@@ -145,20 +147,19 @@ public class PlayerController : MonoBehaviour {
         HandleRotation();
     }
 
-    
-    
+
     private void FixedUpdate() {
         GroundCheck();
         if (!(owner == GameManager.Instance.CurrentPlayer) || _cameraManager.CameraIsPanning) {
             StopTransform();
             return;
         }
-        
+
         if (_cameraManager.lookMode == LookMode.FirstPerson || !_canWalk) {
             HandleRotation();
             return;
         }
-        
+
         if (!IsGrounded) return;
 
         HandleAllMovement();
@@ -167,9 +168,11 @@ public class PlayerController : MonoBehaviour {
     private void LateUpdate() {
         if (!(owner == GameManager.Instance.CurrentPlayer) || _cameraManager.CameraIsPanning) return;
 
-        _cameraManager.RotateCamera();
-        _cameraManager.FollowTarget(owner._currentWorm.transform);
-        _cameraManager.HandleCameraCollision();
+        if (owner != null && owner._currentWorm != null) {
+            _cameraManager.RotateCamera();
+            _cameraManager.FollowTarget(owner._currentWorm.transform);
+            _cameraManager.HandleCameraCollision();
+        }
     }
 
     private void StopTransform() {
@@ -193,8 +196,9 @@ public class PlayerController : MonoBehaviour {
 
             transform.rotation = playerRot;
         }
-        else { // WATTAFAKKA
-                 transform.localEulerAngles = new Vector3(transform.localRotation.x,
+        else {
+            // WATTAFAKKA
+            transform.localEulerAngles = new Vector3(transform.localRotation.x,
                 _cameraManager.GetCurrentEulerRotation().y,
                 transform.localRotation.z); // this isn't working needs to rotate.
         }
@@ -205,7 +209,7 @@ public class PlayerController : MonoBehaviour {
             if (walkTimer > 0) {
                 walkTimer -= Time.deltaTime;
             }
-            else if(turn == PlayerTurn.Walk) {
+            else if (turn == PlayerTurn.Walk) {
                 // this cant be done enterACtion, this is called once in a while, every fifth second needs a gaurd cloud for starting timer. 
                 InputManager.Instance.DisableMovement();
                 EnterAction();
@@ -219,7 +223,7 @@ public class PlayerController : MonoBehaviour {
             jumpPower = Mathf.Clamp(jumpPower, 1, 10);
         }
     }
-    
+
     private void GroundCheck() {
         // do this better.
         if (!IsGrounded) {
