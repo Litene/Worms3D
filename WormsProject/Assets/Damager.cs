@@ -6,8 +6,10 @@ using UnityEngine;
 public class Damager : MonoBehaviour {
     private int _damage;
 
+    
     public void SetDamage(int damage) {
         this._damage = damage;
+        
     }
 
     // private void OnTriggerEnter(Collider other) {
@@ -21,7 +23,6 @@ public class Damager : MonoBehaviour {
     private void OnCollisionEnter(Collision collision) {
         Worm hitObject = collision.gameObject.GetComponent<Worm>();
         if (hitObject != null) {
-            Debug.Log("yo");
             hitObject.Health.Damage(hitObject, _damage);
         }
     }

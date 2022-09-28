@@ -11,7 +11,7 @@ public class MachineGun : Weapon {
     private float _shootTimer;
     private Vector3 bulletSpread;
     
-    public override void Shoot(Transform muscle, ref int currentAmmo, ObjectPool<GameObject> pool, Vector3 shootRotation, Worm worm, bool shooting) {
+    public override void Shoot(Transform muscle, ref int currentAmmo, ObjectPool<GameObject> pool, Vector3 shootRotation, Worm worm, bool shooting, bool buttonUp) {
         if (currentAmmo <= 0) {
             return;
         }

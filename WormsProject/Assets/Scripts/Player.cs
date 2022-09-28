@@ -9,7 +9,7 @@ public class Player {
     public PlayerColor color;
     //public Nest SpawnSlot; 
     public List<Worm> _worms = new List<Worm>();
-
+    
     //public List<PlayerController> controllers;
     public int _currentWormIndex;
     public Worm _currentWorm;

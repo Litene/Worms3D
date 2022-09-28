@@ -52,20 +52,22 @@ public class Worm : MonoBehaviour, IDamageable {
     public void ChangeCurrentWeapon(bool initialCall) {
         if (initialCall) {
             _currentWeapon = AllWeapons[_currentWeaponIndex];
-            ResetWeapon("initialcCallCurentWeapon");
+            ResetWeapon();
             return;
         }
 
         _currentWeaponIndex = (_currentWeaponIndex + 1) % AllWeapons.Count;
         _currentWeapon = AllWeapons[_currentWeaponIndex];
-        ResetWeapon("End of ChangeCurrentWep");
+        ResetWeapon();
     }
 
-    public void ResetWeapon(string callingMethod) {
+    public void ResetWeapon() {
+        
         // this needs to be called on correct worm, not all worms.
         if (_currentWeapon != null) {
             //_currentWeapon.PProjectile.GetComponent<Damager>().SetDamage(_currentWeapon.Damage);
             _ammo = _currentWeapon.MaxAmmo;
+            _currentWeapon.InitializeWeapon();
         }
 
         _chargingWeapon = false;
@@ -79,7 +81,7 @@ public class Worm : MonoBehaviour, IDamageable {
             return;
         }
 
-        _chargingWeapon = false;
+        
 
         // var poolObject = _pool.Get();
         // Physics.IgnoreCollision(poolObject.GetComponent<Collider>(),
@@ -93,16 +95,15 @@ public class Worm : MonoBehaviour, IDamageable {
         
     }
 
-    public void StartCharging() {
-        // weapon charge
-        if ((_controller.turn == PlayerTurn.Shoot)) {
-            _chargingWeapon = true;
+    public void OnRelease() {
+        if (!(_currentWeapon is Sniper)) {
+            return;
         }
-
-        // if (_currentWeapon is MachineGun) {
-        //     ShootCurrentWeapon();
-        // }
+        _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool,
+            _controller._cameraManager.GetCurrentEulerRotation() /*this is trash*/, this, true, true);
     }
+
+   
 
     private IEnumerator ClearPoolObject(float bulletUpTime, GameObject poolObject) {
         // rename if you can't implement through queue.
@@ -120,7 +121,7 @@ public class Worm : MonoBehaviour, IDamageable {
             return;
 
         _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool,
-            _controller._cameraManager.GetCurrentEulerRotation() /*this is trash*/, this, _shooting);
+            _controller._cameraManager.GetCurrentEulerRotation() /*this is trash*/, this, _shooting, false);
        
         // if (_shooting) {
         //     // if ((_currentWeapon is Sniper)) { // move logic to weapon?

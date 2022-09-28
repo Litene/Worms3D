@@ -9,7 +9,12 @@ public abstract class Weapon : ScriptableObject {
    public GameObject PProjectile;
    public int Damage;
    public float CoolDown;
-   public virtual void Shoot(Transform muscle, ref int currentAmmo, ObjectPool<GameObject> _pool, Vector3 shootRotation, Worm worm, bool shooting) {}
+   public bool ShootOnRelease;
+   public virtual void Shoot(Transform muscle, ref int currentAmmo, ObjectPool<GameObject> _pool, Vector3 shootRotation, Worm worm, bool shooting, bool buttonUp) {}
+
+   public virtual void InitializeWeapon() {
+      
+   }
 
 
   

@@ -11,64 +11,47 @@ public class Sniper : Weapon {
     private const float _bulletUptime = 3;
     private float power;
     private const float coolDown = 3;
-
     private float shootTimer;
-
+    public override void InitializeWeapon() {
+        ShootOnRelease = true;
+    }
     public override void Shoot(Transform muscle, ref int currentAmmo, ObjectPool<GameObject> pool,
-        Vector3 shootRotation, Worm worm, bool shooting) {
+        Vector3 shootRotation, Worm worm, bool shooting, bool ButtonUp) {
         if (currentAmmo <= 0) {
             return;
         }
 
         shootTimer += Time.deltaTime;
-        // GET RECKED DOESN't WORK
-
-        if (!ChargePower(shooting)) {
-            
-        }
         
-        //shootPower = shootPower * Time.deltaTime * 10f;
-        // //shootPower = Mathf.Clamp(shootPower, MinimumShootPower, MaximumShootPower);
-        // if (power > MinimumShootPower && shootTimer > coolDown) {
-        //     currentAmmo--;
-        //     var poolObject = pool.Get();
-        //     Physics.IgnoreCollision(poolObject.GetComponent<Collider>(),
-        //         worm.GetComponent<Collider>());
-        //     poolObject.transform.position = muscle.transform.position;
-        //     Vector3 dir = Quaternion.Euler(shootRotation) * Vector3.forward;
-        //     poolObject.GetComponent<Rigidbody>().AddForce(dir * power, ForceMode.Impulse);
-        //     poolObject.GetComponent<Damager>().SetDamage(Damage);
-        //     shootTimer = 0;
-        //     power = MinimumShootPower;
-        // }
-        //
-        // if (!shooting) {
-        //     shootTimer = 0;
-        //     return;
-        // }
-        //
-        // power += Time.deltaTime * 10f;
-        // power = Mathf.Clamp(power, MinimumShootPower,
-        //     MaximumShootPower); // this is a messy call
-        // if (!buttonUp) {
-        //     return;
-        // }
-        //
-        //base.ClearPoolObject(_bulletUptime, poolObject, pool);
+        if (shooting) {
+            ChargePower(shooting);
+        }
+        else {
+            return;
+        }
+
+        if (ShootOnRelease && shootTimer > coolDown && ButtonUp) {
+            currentAmmo--;
+            var poolObject = pool.Get();
+            Physics.IgnoreCollision(poolObject.GetComponent<Collider>(),
+                worm.GetComponent<Collider>());
+            poolObject.transform.position = muscle.transform.position;
+            Vector3 dir = Quaternion.Euler(shootRotation) * Vector3.forward;
+            poolObject.GetComponent<Rigidbody>().AddForce(dir * power, ForceMode.Impulse);
+            poolObject.GetComponent<Damager>().SetDamage(Damage);
+            shootTimer = 0;
+            power = MinimumShootPower;
+        }
     }
 
     private bool ChargePower(bool HoldingButton) {
-        bool TimeToShoot = HoldingButton;
         if (HoldingButton) {
-            TimeToShoot = false;
             power += Time.deltaTime * 10f;
             power = Mathf.Clamp(power, MinimumShootPower,
                 MaximumShootPower); // this is a messy call
-            return true;
         }
-        else {
-            return !TimeToShoot;
-        }
+
+        return true;
     }
 
 

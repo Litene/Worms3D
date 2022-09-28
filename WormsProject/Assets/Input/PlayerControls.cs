@@ -71,6 +71,15 @@ public partial class @PlayerControls : IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""OnMouseRelease"",
+                    ""type"": ""Button"",
+                    ""id"": ""5011452c-6e72-4393-b949-bafc9f30b17e"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -238,6 +247,17 @@ public partial class @PlayerControls : IInputActionCollection2, IDisposable
                     ""action"": ""Shoot"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1632981f-7983-4e15-bc4d-2a2d621f3e31"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""OnMouseRelease"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -391,6 +411,7 @@ public partial class @PlayerControls : IInputActionCollection2, IDisposable
         m_PlayerMovement_Jump = m_PlayerMovement.FindAction("Jump", throwIfNotFound: true);
         m_PlayerMovement_Reload = m_PlayerMovement.FindAction("Reload", throwIfNotFound: true);
         m_PlayerMovement_Shoot = m_PlayerMovement.FindAction("Shoot", throwIfNotFound: true);
+        m_PlayerMovement_OnMouseRelease = m_PlayerMovement.FindAction("OnMouseRelease", throwIfNotFound: true);
         // NextTurn
         m_NextTurn = asset.FindActionMap("NextTurn", throwIfNotFound: true);
         m_NextTurn_NextPlayer = m_NextTurn.FindAction("NextPlayer", throwIfNotFound: true);
@@ -470,6 +491,7 @@ public partial class @PlayerControls : IInputActionCollection2, IDisposable
     private readonly InputAction m_PlayerMovement_Jump;
     private readonly InputAction m_PlayerMovement_Reload;
     private readonly InputAction m_PlayerMovement_Shoot;
+    private readonly InputAction m_PlayerMovement_OnMouseRelease;
     public struct PlayerMovementActions
     {
         private @PlayerControls m_Wrapper;
@@ -479,6 +501,7 @@ public partial class @PlayerControls : IInputActionCollection2, IDisposable
         public InputAction @Jump => m_Wrapper.m_PlayerMovement_Jump;
         public InputAction @Reload => m_Wrapper.m_PlayerMovement_Reload;
         public InputAction @Shoot => m_Wrapper.m_PlayerMovement_Shoot;
+        public InputAction @OnMouseRelease => m_Wrapper.m_PlayerMovement_OnMouseRelease;
         public InputActionMap Get() { return m_Wrapper.m_PlayerMovement; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -503,6 +526,9 @@ public partial class @PlayerControls : IInputActionCollection2, IDisposable
                 @Shoot.started -= m_Wrapper.m_PlayerMovementActionsCallbackInterface.OnShoot;
                 @Shoot.performed -= m_Wrapper.m_PlayerMovementActionsCallbackInterface.OnShoot;
                 @Shoot.canceled -= m_Wrapper.m_PlayerMovementActionsCallbackInterface.OnShoot;
+                @OnMouseRelease.started -= m_Wrapper.m_PlayerMovementActionsCallbackInterface.OnOnMouseRelease;
+                @OnMouseRelease.performed -= m_Wrapper.m_PlayerMovementActionsCallbackInterface.OnOnMouseRelease;
+                @OnMouseRelease.canceled -= m_Wrapper.m_PlayerMovementActionsCallbackInterface.OnOnMouseRelease;
             }
             m_Wrapper.m_PlayerMovementActionsCallbackInterface = instance;
             if (instance != null)
@@ -522,6 +548,9 @@ public partial class @PlayerControls : IInputActionCollection2, IDisposable
                 @Shoot.started += instance.OnShoot;
                 @Shoot.performed += instance.OnShoot;
                 @Shoot.canceled += instance.OnShoot;
+                @OnMouseRelease.started += instance.OnOnMouseRelease;
+                @OnMouseRelease.performed += instance.OnOnMouseRelease;
+                @OnMouseRelease.canceled += instance.OnOnMouseRelease;
             }
         }
     }
@@ -698,6 +727,7 @@ public partial class @PlayerControls : IInputActionCollection2, IDisposable
         void OnJump(InputAction.CallbackContext context);
         void OnReload(InputAction.CallbackContext context);
         void OnShoot(InputAction.CallbackContext context);
+        void OnOnMouseRelease(InputAction.CallbackContext context);
     }
     public interface INextTurnActions
     {

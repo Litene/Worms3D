@@ -43,6 +43,7 @@ public class InputManager : MonoBehaviour {
         _controls.SpaceAction.Space.performed += val => _currentController.SpaceAction();
         //_controls.PlayerMovement.Shoot.started += val => _currentController.owner._currentWorm.StartCharging(); // Shoot, Split this
         _controls.PlayerMovement.Shoot.performed += val => _currentController.owner._currentWorm.ShootCurrentWeapon(val.ReadValue<float>()); // shoot, split this
+        _controls.PlayerMovement.OnMouseRelease.canceled += val => _currentController.owner._currentWorm.OnRelease();
         //_controls.NextTurn.NextPlayer.performed += val => GameManager.Instance.NextPlayer();
         //_controls.NextWorm.NextWorm.performed += val => GameManager.Instance.NextWorm();
         //_controls.SwapCameraMode.SwapCameraMode.performed += val => _currentController._cameraManager.SwapCameraMode();
