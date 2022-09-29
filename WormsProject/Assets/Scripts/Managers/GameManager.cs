@@ -31,7 +31,7 @@ public class GameManager : MonoBehaviour {
         // wait wat?
         get { return _currentPlayer; }
         set {
-            //value.NextWorm(true);
+            UIManager.Instance.SetCurrentPlayer(value.color);
             _currentPlayer = value;
         }
     }
@@ -85,7 +85,7 @@ public class GameManager : MonoBehaviour {
             worm._controller.InitializePlayerTurn();
         }
 
-        _currentPlayer.NextWorm(true);
+        CurrentPlayer.NextWorm(true);
     }
 
     public void NextWorm() {
@@ -134,11 +134,17 @@ public class GameManager : MonoBehaviour {
     public void WinCondition() {
         if (_players.Count == 1) {
             GameOver = true;
-            Debug.Log($" player has just won. {_players[0]}");
+            UIManager.Instance.ActivateEndscreen(_players[0].color);
         }
         else if (_players.Count == 0) {
             GameOver = true;
             // even all died
+        }
+    }
+
+    private void Update() {
+        if (Input.GetKeyDown(KeyCode.R)) {
+            UIManager.Instance.ActivateEndscreen(PlayerColor.Red);
         }
     }
 
@@ -171,5 +177,9 @@ public class GameManager : MonoBehaviour {
         for (int i = 0; i < amountOfPlayers; i++) {
             _players.Add(new Player((PlayerColor)i, amountOfWorms));
         }
+    }
+
+    public void QuitGame() {
+        Application.Quit();
     }
 }

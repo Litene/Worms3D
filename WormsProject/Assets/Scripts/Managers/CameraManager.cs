@@ -35,7 +35,7 @@ public class CameraManager : MonoBehaviour {
     private float _defaultPos;
     private Vector3 rotation;
     private Quaternion targetRotation;
-    private float _cameraCollisionRadius = 0.2f;
+    private float _cameraCollisionRadius = 1f;
     public LayerMask CollisionLayers;
     private float _cameraCollisionOffset = 0.2f;
     private float _minimumColisionOffset = 0.2f;
@@ -43,6 +43,7 @@ public class CameraManager : MonoBehaviour {
     private Transform _currentTarget;
     private Vector3 _thirdPersonPanValue = new Vector3(15f, 0f, 0f);
     private Vector3 _firstPersonPanValue = Vector3.zero; // jumps to much
+
     private Transform _cameraTransform;
     //public Quaternion _currentRotation;//private Transform _mainCamTransform;
 
@@ -59,14 +60,15 @@ public class CameraManager : MonoBehaviour {
         _firstPersonView.position = _firstPositionOffset;
         _thirdRotation = _thirdPersonView.rotation;
         _cameraTransform.localEulerAngles = _thirdPersonPanValue;
-       // _currentRotation = transform.rotation * _firstPersonView.rotation;
+        // _currentRotation = transform.rotation * _firstPersonView.rotation;
     }
 
     public Vector3 GetCurrentEulerRotation() {
-        return new Vector3(_firstPersonView.localEulerAngles.x,transform.localEulerAngles.y, 0);
+        return new Vector3(_firstPersonView.localEulerAngles.x, transform.localEulerAngles.y, 0);
     }
 
-    public void SwapCameraMode() { // glitchy solution, lerp towards all values here.. good for now. 
+    public void SwapCameraMode() {
+        // glitchy solution, lerp towards all values here.. good for now. 
         pivotAngle = 0;
         if (_cameraTransform.parent == _firstPersonView) {
             _cameraTransform.parent = _thirdPersonView;
@@ -84,7 +86,7 @@ public class CameraManager : MonoBehaviour {
         }
 
         //transform.rotation = _thirdRotation;
-        
+
         if (!CameraIsPanning) {
             StartCoroutine(CameraPan());
         }
@@ -153,7 +155,6 @@ public class CameraManager : MonoBehaviour {
         rotation.y = LookAngle;
         targetRotation = Quaternion.Euler(rotation);
         transform.rotation = targetRotation;
-
     }
 
     private IEnumerator CameraPan() {
@@ -168,25 +169,39 @@ public class CameraManager : MonoBehaviour {
         CameraIsPanning = false;
     }
 
+    
+    
     public void HandleCameraCollision() {
         if (lookMode == LookMode.FirstPerson) return;
 
-        float targetPos = _defaultPos;
-        RaycastHit hit;
-        Vector3 direction = _cameraTransform.position - _thirdPersonView.position;
-        direction.Normalize();
-
-        if (Physics.SphereCast(_currentView.transform.position, _cameraCollisionRadius, direction, out hit,
-                Mathf.Abs(targetPos), CollisionLayers)) {
-            float distance = Vector3.Distance(_currentView.position, hit.point);
-            targetPos = -(distance - _cameraCollisionOffset);
-        }
-
-        if (Mathf.Abs(targetPos) < _minimumColisionOffset) {
-            targetPos = targetPos - _minimumColisionOffset;
-        }
-
-        _cameraVectorPos.z = Mathf.Lerp(_cameraTransform.localPosition.z, targetPos, 0.2f);
-        _cameraTransform.localPosition = _cameraVectorPos;
+        // RaycastHit hit;
+        // float targetPos = _defaultPos;
+        //
+        // if (_currentTarget != null) {
+        //     Vector3 direction = _cameraTransform.position - _currentTarget.position;
+        //     direction.Normalize();
+        //
+        //     Debug.DrawRay(_currentTarget.position, -direction, Color.red, 10f);
+        //     if (Physics.SphereCast(_currentTarget.position, _cameraCollisionOffset, direction, out hit,
+        //             Vector3.Magnitude(_cameraTransform.position - _currentTarget.position))) {
+        //         // var cordinate = Vector3.Project(hit.point - _currentTarget.position, direction) +
+        //         //                 _currentTarget.position;
+        //         //transform.position += transform.forward * _cameraCollisionOffset;
+        //         transform.Translate(-direction);
+        //         //transform.position = Vector3.Lerp(transform.position, transform.forward * _cameraCollisionOffset, 0.2f);
+        //         return true;
+        //         // float distance = Vector3.Distance(hit.point, _currentTarget.position);
+        //         // targetPos = +(distance - _cameraCollisionOffset);
+        //
+        //     }
+        // }
+        //
+        // return false;
+        // if (Mathf.Abs(targetPos) < _minimumColisionOffset) {
+        //     targetPos = targetPos - _minimumColisionOffset;
+        // }
+        //
+        // _cameraVectorPos.z = Mathf.Lerp(_cameraTransform.localPosition.z, targetPos, 0.2f);
+        // _cameraTransform.localPosition = _cameraVectorPos;
     }
 }

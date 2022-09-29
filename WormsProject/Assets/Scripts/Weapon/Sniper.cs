@@ -14,6 +14,7 @@ public class Sniper : Weapon {
     private float shootTimer;
     public override void InitializeWeapon() {
         ShootOnRelease = true;
+        shootTimer = 5;
     }
     public override void Shoot(Transform muscle, ref int currentAmmo, ObjectPool<GameObject> pool,
         Vector3 shootRotation, Worm worm, bool shooting, bool ButtonUp) {

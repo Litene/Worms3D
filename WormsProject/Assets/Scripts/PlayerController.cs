@@ -98,9 +98,10 @@ public class PlayerController : MonoBehaviour {
                 _cameraManager.SwapCameraMode();
                 turn = PlayerTurn.SelectWeapon;
                 UIManager.Instance.ActivateMiddleTextImage(turn);
+                UIManager.Instance.ToggleAim(turn);
+                UIManager.Instance.SetWeaponSprite(owner._currentWorm._currentWeapon);
                 break;
             case PlayerTurn.SelectWeapon:
-                UIManager.Instance.ToggleAim(turn);
                 turn = PlayerTurn.Shoot;
                 UIManager.Instance.ActivateMiddleTextImage(turn);
                 break;

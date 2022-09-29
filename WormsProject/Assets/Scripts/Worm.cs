@@ -59,6 +59,7 @@ public class Worm : MonoBehaviour, IDamageable {
         _currentWeaponIndex = (_currentWeaponIndex + 1) % AllWeapons.Count;
         _currentWeapon = AllWeapons[_currentWeaponIndex];
         ResetWeapon();
+        UIManager.Instance.SetWeaponSprite(_currentWeapon);
     }
 
     public void ResetWeapon() {
