@@ -1,3 +1,4 @@
+
 using System;
 using UnityEngine;
 
@@ -48,7 +49,7 @@ public class InputManager : MonoBehaviour {
         //_controls.NextWorm.NextWorm.performed += val => GameManager.Instance.NextWorm();
         //_controls.SwapCameraMode.SwapCameraMode.performed += val => _currentController._cameraManager.SwapCameraMode();
         _controls.PlayerMovement.Camera.performed += val => _camManager.SetRotationCamera(val.ReadValue<Vector2>());
-        _controls.PlayerMovement.Jump.performed += val => _currentController.SetJumpValue();
+        _controls.PlayerMovement.Jump.performed += val => _currentController.CharacterJump();
         _controls.Enable();
 
     }

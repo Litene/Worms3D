@@ -18,11 +18,15 @@ public enum PlayerColor {
 }
 
 public class GameManager : MonoBehaviour {
-    public int amountOfPlayers;
-    [SerializeField] private int amountOfWorms;
+    public int AmountOfPlayers;
+    [SerializeField] private int _amountOfWorms;
     private Vector3 SpawnOffset;
     public Nest[] Nests { get; private set; }
     [SerializeField] private List<Player> _players;
+
+    public List<Player> GetPlayers() {
+        return _players;
+    }
     private Player _currentPlayer;
     private CameraManager _camManager;
     public bool GameOver = false;
@@ -50,8 +54,8 @@ public class GameManager : MonoBehaviour {
         _settings = FindObjectOfType<GameSettings>();
         if (!_settings) return;
 
-        amountOfPlayers = _settings.amountOfPlayers;
-        amountOfWorms = _settings.amountOfWorms;
+        AmountOfPlayers = _settings.amountOfPlayers;
+        _amountOfWorms = _settings.amountOfWorms;
         SpawnOffset = new Vector3(0, 0.75f, 0);
         StartGame();
     }
@@ -96,7 +100,6 @@ public class GameManager : MonoBehaviour {
     private static void GenerateSingleton() {
         GameObject gameManagerObject = new GameObject("GameManager");
         gameManagerObject.transform.parent = GameObject.Find("Managers").transform;
-        //DontDestroyOnLoad(gameManagerObject);
         _instance = gameManagerObject.AddComponent<GameManager>();
     }
 
@@ -115,7 +118,6 @@ public class GameManager : MonoBehaviour {
     }
 
     public void RemoveDeadPlayers() {
-        //  call at a appropriate place
         List<Player> playerToRemove = new List<Player>();
         foreach (var player in _players) {
             Debug.Log($"player: {player}, has wormcount: {player._worms.Count}");
@@ -150,7 +152,7 @@ public class GameManager : MonoBehaviour {
 
     private void GenerateWorms() {
         foreach (var nest in Nests) {
-            for (int i = 0; i < amountOfWorms; i++) {
+            for (int i = 0; i < _amountOfWorms; i++) {
                 if (nest.Owner.prefab == null) continue;
                 var spawnPoint = nest.GetRandomSpawnPoint();
                 var worm = Instantiate(nest.Owner.prefab, spawnPoint.position + SpawnOffset,
@@ -166,16 +168,17 @@ public class GameManager : MonoBehaviour {
         AssignPlayerToNest();
         GenerateWorms();
         foreach (var player in _players) {
-            player.SetWorms(amountOfWorms);
+            player.SetWorms(_amountOfWorms);
         }
 
         CurrentPlayer = _players[_currentPlayerIndex];
         StartCoroutine(InitializeWorms());
+        UIManager.Instance.SetupHealthBars(_players.Count);
     }
 
     private void InitializePlayers() {
-        for (int i = 0; i < amountOfPlayers; i++) {
-            _players.Add(new Player((PlayerColor)i, amountOfWorms));
+        for (int i = 0; i < AmountOfPlayers; i++) {
+            _players.Add(new Player((PlayerColor)i, _amountOfWorms));
         }
     }
 

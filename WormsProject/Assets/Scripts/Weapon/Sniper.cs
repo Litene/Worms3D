@@ -16,10 +16,10 @@ public class Sniper : Weapon {
         ShootOnRelease = true;
         shootTimer = 5;
     }
-    public override void Shoot(Transform muscle, ref int currentAmmo, ObjectPool<GameObject> pool,
+    public override GameObject Shoot(Transform muscle, ref int currentAmmo, ObjectPool<GameObject> pool,
         Vector3 shootRotation, Worm worm, bool shooting, bool ButtonUp) {
         if (currentAmmo <= 0) {
-            return;
+            return null;
         }
 
         shootTimer += Time.deltaTime;
@@ -28,7 +28,7 @@ public class Sniper : Weapon {
             ChargePower(shooting);
         }
         else {
-            return;
+            return null;
         }
 
         if (ShootOnRelease && shootTimer > coolDown && ButtonUp) {
@@ -42,7 +42,10 @@ public class Sniper : Weapon {
             poolObject.GetComponent<Damager>().SetDamage(Damage);
             shootTimer = 0;
             power = MinimumShootPower;
+            return poolObject;
         }
+
+        return null;
     }
 
     private bool ChargePower(bool HoldingButton) {
