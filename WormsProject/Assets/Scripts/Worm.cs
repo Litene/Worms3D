@@ -24,6 +24,9 @@ public class Worm : MonoBehaviour, IDamageable {
     public PlayerController _controller;
     private bool _chargingWeapon;
     private bool _shooting;
+    public HealthSystem Health { get; set; }
+    public int MaxHealth = 100;
+    private bool _airControl;
 
     private void Awake() {
         _controller = GetComponent<PlayerController>();
@@ -41,8 +44,7 @@ public class Worm : MonoBehaviour, IDamageable {
 
     private void Start() {
         UIManager.Instance.ActivateMiddleTextImage(_controller.turn);
-        Health = new HealthSystem(100);
-        //ChangeCurrentWeapon(true);
+        Health = new HealthSystem(MaxHealth);
     }
 
     public Player GetOwner() {
@@ -70,97 +72,45 @@ public class Worm : MonoBehaviour, IDamageable {
             _ammo = _currentWeapon.MaxAmmo;
             _currentWeapon.InitializeWeapon();
         }
+        UIManager.Instance.SetWeaponSprite(null);
 
         _chargingWeapon = false;
     }
 
     public void ShootCurrentWeapon(float pressValue) {
-        // now this is suscribed on button up, this needs to happen on button down for machine gun. 
-
         _shooting = pressValue > 0.1f;
         if (!(_controller.turn == PlayerTurn.Shoot)) {
             return;
         }
-
-        
-
-        // var poolObject = _pool.Get();
-        // Physics.IgnoreCollision(poolObject.GetComponent<Collider>(),
-        //     _collider); // cache this
-        // _currentWeapon.Shoot(_weaponMuscle, ref _ammo, poolObject,
-        //     _controller._cameraManager.GetCurrentEulerRotation());
-        // StartCoroutine(ClearPoolObject(_bulletUpTime, poolObject));
-        
-            // _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool,
-            //     _controller._cameraManager.GetCurrentEulerRotation() /*this is trash*/, this, _shootPower);
-        
     }
 
-    public void OnRelease() {
-        if (!(_currentWeapon is Sniper)) {
+    public void OnRelease() { // 
+        if (!(_currentWeapon is Sniper) || _controller.turn != PlayerTurn.Shoot ) { 
             return;
         }
-        _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool,
+        var poolObject = _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool,
             _controller._cameraManager.GetCurrentEulerRotation() /*this is trash*/, this, true, true);
+        if (poolObject != null) {
+            StartCoroutine(ClearPoolObject(2, poolObject));
+        }
     }
-
-   
-
+    
     private IEnumerator ClearPoolObject(float bulletUpTime, GameObject poolObject) {
-        // rename if you can't implement through queue.
         yield return new WaitForSeconds(bulletUpTime);
         _pool.Release(poolObject);
-    }
-
-    private void Timers() {
-        // remove?
-        //shootTimer += Time.deltaTime;
     }
 
     private void Update() {
         if (!(_controller.turn == PlayerTurn.Shoot))
             return;
 
-        _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool,
+        var poolObject = _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool,
             _controller._cameraManager.GetCurrentEulerRotation() /*this is trash*/, this, _shooting, false);
-       
-        // if (_shooting) {
-        //     // if ((_currentWeapon is Sniper)) { // move logic to weapon?
-        //     //     _shootPower += Time.deltaTime * 10f;
-        //     //     _shootPower = Mathf.Clamp(_shootPower, (_currentWeapon as Sniper).MinimumShootPower,
-        //     //         (_currentWeapon as Sniper).MaximumShootPower); // this is a messy call
-        //     // }
-        //     if(_canShoot) {
-        //     }
-        // }
-        // else if (!_shooting && !_canShoot && (_currentWeapon is Sniper)) {
-        //     _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool,
-        //         _controller._cameraManager.GetCurrentEulerRotation() /*this is trash*/, this, _shooting, _canShoot);
-        //     _canShoot = true;
-        // }
-
-        // if (_chargingWeapon) {
-        //     if ((_currentWeapon is Sniper)) {
-        //         _shootPower += Time.deltaTime * 10f;
-        //         _shootPower = Mathf.Clamp(_shootPower, (_currentWeapon as Sniper).MinimumShootPower,
-        //             (_currentWeapon as Sniper).MaximumShootPower); // this is a messy call
-        //     }
-        // }
-        //Timers(); // this doesn't work, need fucntionality directly in weapon. 
-        // Debug.Log(shootTimer);
-        // if (_shooting && !hasShot) {
-        //     if (_currentWeapon.CoolDown < shootTimer) {
-        //         Physics.IgnoreCollision(poolObject.GetComponent<Collider>(),
-        //             _collider); // cache this
-        //         _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool,
-        //             _controller._cameraManager.GetCurrentEulerRotation(), this, _shooting);
-        //         StartCoroutine(ClearPoolObject(_bulletUpTime, poolObject));
-        //         shootTimer = 0;
-        //         hasShot = true;
-        //     }
-        // }
+        if (poolObject != null) {
+            StartCoroutine(ClearPoolObject(3, poolObject));
+        }
+        
     }
-
 
     private PlayerColor _color;
     private float _shootPower;
@@ -173,9 +123,6 @@ public class Worm : MonoBehaviour, IDamageable {
         InputManager.Instance.SetCurrentController(_controller);
         ChangeCurrentWeapon(true);
     }
-
-
-    public HealthSystem Health { get; set; }
 
     public GameObject ReturnGameObject() {
         return gameObject;

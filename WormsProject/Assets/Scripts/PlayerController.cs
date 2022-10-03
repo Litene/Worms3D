@@ -31,12 +31,12 @@ public class PlayerController : MonoBehaviour {
     public bool IsGrounded;
     public LayerMask groundLayer;
     [SerializeField] private Transform _groundChild;
-    private Collider _collider;
+    private CapsuleCollider _collider;
     public PlayerTurn turn;
 
     private float _inAirTimer;
     private float _jumpVelocity = 3;
-    private float _fallingSpeed = 33;
+    private float _fallingSpeed = 200;
     private float rayCastHeightOffset = 0.5f;
     private bool hitDetect;
     private RaycastHit hit;
@@ -44,19 +44,21 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private bool startJumping;
     [SerializeField] private float jumpPower;
     [SerializeField] private float walkTimer;
+    private float _groundCheckDistance = 0.05f;
+    private float _groundCheckRadiusMultiplier = 0.9f;
     private bool _canWalk;
 
     private void Awake() {
         _rb = GetComponent<Rigidbody>();
         _cameraManager = FindObjectOfType<CameraManager>();
         _groundChild = transform.Find("GroundCheckObject");
-        _collider = GetComponent<Collider>();
+        _collider = GetComponent<CapsuleCollider>();
         if (Camera.main != null) _cameraObject = Camera.main.transform;
     }
 
     private void Start() {
         _groundCheckRange = _collider.bounds.extents.y + 0.01f;
-        walkTimer = 5;
+        walkTimer = 10;
     }
 
     public void InitializePlayerTurn() {
@@ -92,6 +94,7 @@ public class PlayerController : MonoBehaviour {
                 turn = PlayerTurn.Walk;
                 _canWalk = true;
                 UIManager.Instance.ActivateMiddleTextImage(turn);
+                ResetMovement();
                 break;
             case PlayerTurn.Walk:
                 InputManager.Instance.DisableMovement();
@@ -100,6 +103,7 @@ public class PlayerController : MonoBehaviour {
                 UIManager.Instance.ActivateMiddleTextImage(turn);
                 UIManager.Instance.ToggleAim(turn);
                 UIManager.Instance.SetWeaponSprite(owner._currentWorm._currentWeapon);
+                ResetMovement();
                 break;
             case PlayerTurn.SelectWeapon:
                 turn = PlayerTurn.Shoot;
@@ -133,24 +137,22 @@ public class PlayerController : MonoBehaviour {
         }
     }
 
-    private void HandleMovement() {
+    private void HandleMovement() { // this overwrites the falling from gravity
         _moveDir = _cameraObject.forward * _verticalInput;
         _moveDir = _moveDir + _cameraObject.right * _horizontalInput;
         _moveDir.Normalize();
         _moveDir.y = 0; // clumsy solution. 
-        _moveDir = _moveDir * _movementSpeed;
-        Vector3 movementVelocity = _moveDir;
-        _rb.velocity = movementVelocity;
+        _rb.velocity = IsGrounded ? _moveDir * _movementSpeed : _moveDir * (_movementSpeed * 0.5f);
     }
 
     public void HandleAllMovement() {
-        HandleMovement();
+         HandleMovement(); // overwrites movement from player
         HandleRotation();
     }
 
 
     private void FixedUpdate() {
-        GroundCheck();
+        Gravity();
         if (!(owner == GameManager.Instance.CurrentPlayer) || _cameraManager.CameraIsPanning) {
             StopTransform();
             return;
@@ -160,8 +162,6 @@ public class PlayerController : MonoBehaviour {
             HandleRotation();
             return;
         }
-
-        if (!IsGrounded) return;
 
         HandleAllMovement();
     }
@@ -178,6 +178,8 @@ public class PlayerController : MonoBehaviour {
 
     private void StopTransform() {
         _rb.velocity = Vector3.zero;
+        _verticalInput = 0;
+        _horizontalInput = 0;
     }
 
     public void HandleRotation() {
@@ -212,47 +214,62 @@ public class PlayerController : MonoBehaviour {
             }
             else if (turn == PlayerTurn.Walk) {
                 // this cant be done enterACtion, this is called once in a while, every fifth second needs a gaurd cloud for starting timer. 
-                InputManager.Instance.DisableMovement();
                 EnterAction();
+                ResetMovement();
                 _canWalk = false;
-                walkTimer = 5;
             }
         }
 
-        if (startJumping) {
-            jumpPower += Time.deltaTime * 10f;
-            jumpPower = Mathf.Clamp(jumpPower, 1, 10);
-        }
+        // if (startJumping) {
+        //     jumpPower += Time.deltaTime * 10f;
+        //     jumpPower = Mathf.Clamp(jumpPower, 1, 10);
+        // }
     }
 
-    private void GroundCheck() {
+    public void ResetMovement() {
+        StopTransform();
+        InputManager.Instance.DisableMovement();
+        walkTimer = 10;
+    }
+
+    private void Gravity() {
+        // capsulecast
         // do this better.
         if (!IsGrounded) {
             _inAirTimer = +Time.deltaTime;
             _rb.AddForce(-Vector3.up * (_fallingSpeed * _inAirTimer), ForceMode.Acceleration);
         }
 
-        hitDetect = Physics.Raycast(_collider.bounds.center, Vector3.down, out hit, _groundCheckRange, groundLayer);
-
-        if (hitDetect) this.IsGrounded = true;
-        else this.IsGrounded = false;
+        IsGrounded = GroundCheck();
     }
 
-    public void SetJumpValue() {
-        if (!IsGrounded || _cameraManager.lookMode == LookMode.FirstPerson) {
-            jumpPower = 0;
-            return;
-        }
+    public bool GroundCheck() {
+        var sphereCastRadius = _collider.radius * _groundCheckRadiusMultiplier;
+        var sphereCastTravelDistance = _collider.bounds.extents.y - sphereCastRadius + _groundCheckDistance;
+        return Physics.SphereCast(_rb.position, sphereCastRadius, Vector3.down, out hit, sphereCastTravelDistance, groundLayer);
+    }
 
-        startJumping = !startJumping;
-        if (!startJumping) {
-            CharacterJump();
-            jumpPower = 0;
+    // public void SetJumpValue() {
+    //     if (!IsGrounded || _cameraManager.lookMode == LookMode.FirstPerson) {
+    //         jumpPower = 0;
+    //         return;
+    //     }
+    //
+    //     startJumping = !startJumping;
+    //     if (!startJumping) {
+    //         CharacterJump();
+    //         jumpPower = 0;
+    //     }
+    // }
+
+    private void OnDrawGizmos() {
+        if (hit.point != null) {
+            var collider = _collider as CapsuleCollider;
+            //Gizmos.(hit.point, collider.radius * 0.5f);
         }
     }
 
-    private void CharacterJump() {
-        //polish jump
-        _rb.AddForce((Vector3.up * jumpPower) + Vector3.forward, ForceMode.Impulse);
+    public void CharacterJump() {
+        _rb.AddForce((Vector3.up * 10), ForceMode.Impulse);
     }
 }
