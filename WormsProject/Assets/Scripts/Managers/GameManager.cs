@@ -23,12 +23,14 @@ public class GameManager : MonoBehaviour {
     private Vector3 SpawnOffset;
     public Nest[] Nests { get; private set; }
     [SerializeField] private List<Player> _players;
+    
 
     public List<Player> GetPlayers() {
         return _players;
     }
     private Player _currentPlayer;
-    private CameraManager _camManager;
+    //private CameraManager _camManager;
+    private OrbitCamera _orbitCamera;
     public bool GameOver = false;
 
     public Player CurrentPlayer {
@@ -47,7 +49,7 @@ public class GameManager : MonoBehaviour {
 
     private void Awake() {
         Nests = FindObjectsOfType<Nest>();
-        _camManager = FindObjectOfType<CameraManager>();
+        _orbitCamera = FindObjectOfType<OrbitCamera>();
     }
 
     private void Start() {
@@ -80,7 +82,8 @@ public class GameManager : MonoBehaviour {
         _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Count;
         CurrentPlayer = _players[_currentPlayerIndex];
         StartCoroutine(InitializeWorms());
-        _camManager.ResetCamera();
+        
+        _orbitCamera.ToggleCameraMode(false);
     }
 
     private IEnumerator InitializeWorms() {
@@ -120,16 +123,13 @@ public class GameManager : MonoBehaviour {
     public void RemoveDeadPlayers() {
         List<Player> playerToRemove = new List<Player>();
         foreach (var player in _players) {
-            Debug.Log($"player: {player}, has wormcount: {player._worms.Count}");
             if (player._worms.Count <= 0) {
                 playerToRemove.Add(player);
             }
         }
-
         foreach (var player in playerToRemove) {
             _players.Remove(player);
         }
-
         WinCondition();
     }
 

@@ -45,6 +45,7 @@ public class CameraManager : MonoBehaviour {
     private Vector3 _firstPersonPanValue = Vector3.zero; // jumps to much
 
     private Transform _cameraTransform;
+    
     //public Quaternion _currentRotation;//private Transform _mainCamTransform;
 
     private void Awake() {
@@ -108,7 +109,7 @@ public class CameraManager : MonoBehaviour {
     //     
     // }
 
-    public void FollowTarget(Transform currentTarget) {
+   /* public void FollowTarget(Transform currentTarget) {
         if (currentTarget == null || CameraIsPanning) return;
 
         if (_currentTarget != currentTarget) {
@@ -126,7 +127,7 @@ public class CameraManager : MonoBehaviour {
         }
 
         transform.position = targetPos;
-    }
+    }*/
 
     public void SetRotationCamera(Vector2 input) {
         _mouseYInput = input.y;

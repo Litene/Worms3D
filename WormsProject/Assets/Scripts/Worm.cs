@@ -89,7 +89,7 @@ public class Worm : MonoBehaviour, IDamageable {
             return;
         }
         var poolObject = _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool,
-            _controller._cameraManager.GetCurrentEulerRotation() /*this is trash*/, this, true, true);
+             this, true, true, _controller._orbitCamera);
         if (poolObject != null) {
             StartCoroutine(ClearPoolObject(2, poolObject));
         }
@@ -104,8 +104,7 @@ public class Worm : MonoBehaviour, IDamageable {
         if (!(_controller.turn == PlayerTurn.Shoot))
             return;
 
-        var poolObject = _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool,
-            _controller._cameraManager.GetCurrentEulerRotation() /*this is trash*/, this, _shooting, false);
+        var poolObject = _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool, this, _shooting, false, _controller._orbitCamera);
         if (poolObject != null) {
             StartCoroutine(ClearPoolObject(3, poolObject));
         }
@@ -121,6 +120,7 @@ public class Worm : MonoBehaviour, IDamageable {
 
     public void ActivateWorm() {
         InputManager.Instance.SetCurrentController(_controller);
+        _controller._orbitCamera.SetTarget(gameObject.transform);
         ChangeCurrentWeapon(true);
     }
 
@@ -129,9 +129,8 @@ public class Worm : MonoBehaviour, IDamageable {
     }
 
     public void Die(Worm worm) {
-        Debug.Log(worm._owner);
         worm._owner._worms.Remove(worm);
-        if (_owner._currentWorm == this) {
+        if (worm._owner._currentWorm == this) {
             GameManager.Instance.NextPlayer();
         }
 

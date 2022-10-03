@@ -11,7 +11,7 @@ public class MachineGun : Weapon {
     private float _shootTimer;
     private Vector3 bulletSpread;
     
-    public override GameObject Shoot(Transform muscle, ref int currentAmmo, ObjectPool<GameObject> pool, Vector3 shootRotation, Worm worm, bool shooting, bool buttonUp) {
+    public override GameObject Shoot(Transform muscle, ref int currentAmmo, ObjectPool<GameObject> pool,  Worm worm, bool shooting, bool buttonUp, OrbitCamera cam) {
         if (currentAmmo <= 0) {
             return null;
         }
@@ -30,8 +30,10 @@ public class MachineGun : Weapon {
             var poolObject = pool.Get();
             Physics.IgnoreCollision(poolObject.GetComponent<Collider>(),
                 worm.GetComponent<Collider>());
+            poolObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
             poolObject.transform.position = muscle.transform.position;
-            Vector3 dir = Quaternion.Euler(shootRotation) * Vector3.forward;
+            Vector3 dir = cam.transform.rotation * Vector3.forward;
+            dir.Normalize();
             poolObject.GetComponent<Rigidbody>().AddForce((dir + bulletSpread) * shootPower, ForceMode.Impulse);
             poolObject.GetComponent<Damager>().SetDamage(Damage);
             _shootTimer = 0;

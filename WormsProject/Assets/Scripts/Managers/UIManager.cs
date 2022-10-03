@@ -84,6 +84,7 @@ public class UIManager : MonoBehaviour {
 
     public void SetupHealthBars(int amountOfPlayers) {
         for (int i = 0; i < amountOfPlayers; i++) {
+            _allHealthbars[i].transform.parent.gameObject.SetActive(true);
             _allHealthbars[i].gameObject.SetActive(true);
         }
     }
@@ -126,7 +127,7 @@ public class UIManager : MonoBehaviour {
     }
 
     private void Awake() {
-        Hud = GameObject.Find("Hud");
+         Hud = GameObject.Find("Hud");
         _aim = Hud.transform.Find("Aim").GetComponent<Image>();
         //_currentPlayer = Hud.transform.Find("CurrentPlayerHeader").transform.Find("CurrentPlayer").GetComponent<TextMeshProUGUI>();
         _middleScreenTextObject = Hud.transform.Find("MiddleText");
@@ -164,6 +165,7 @@ public class UIManager : MonoBehaviour {
 
         foreach (var healthbar in _allHealthbars) {
             healthbar.gameObject.SetActive(false);
+            healthbar.transform.parent.gameObject.SetActive(false);
         }
 
         _endScreenBackground.gameObject.SetActive(false);

@@ -49,7 +49,7 @@ public partial class @PlayerControls : IInputActionCollection2, IDisposable
                     ""name"": ""Jump"",
                     ""type"": ""PassThrough"",
                     ""id"": ""d74c0ed5-415a-4e19-a7b2-c0ca8c45e836"",
-                    ""expectedControlType"": ""Integer"",
+                    ""expectedControlType"": ""Axis"",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false

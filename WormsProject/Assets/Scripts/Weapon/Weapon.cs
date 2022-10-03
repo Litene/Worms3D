@@ -12,7 +12,7 @@ public abstract class Weapon : ScriptableObject {
    public bool ShootOnRelease;
 
    public virtual GameObject Shoot(Transform muscle, ref int currentAmmo, ObjectPool<GameObject> _pool,
-      Vector3 shootRotation, Worm worm, bool shooting, bool buttonUp) {
+       Worm worm, bool shooting, bool buttonUp, OrbitCamera cam) {
       return new GameObject();
    }
 

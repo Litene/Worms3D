@@ -7,7 +7,7 @@ public class InputManager : MonoBehaviour {
     private Vector2 _movementInput;
     [SerializeField] private PlayerController _currentController;
     private Vector2 _cameraInput;
-    [SerializeField] private CameraManager _camManager;
+    [SerializeField] private OrbitCamera _camManager;
    
 
 
@@ -38,7 +38,7 @@ public class InputManager : MonoBehaviour {
 
     private void OnEnable() { // disable/pause _controls at the right time _controls 
         _controls ??= new PlayerControls();
-        _camManager = FindObjectOfType<CameraManager>();
+        _camManager = FindObjectOfType<OrbitCamera>();
         _controls.PlayerMovement.Movement.performed += val => _currentController.SetMoveVector(val.ReadValue<Vector2>());
         _controls.PlayerSequence.EnterAction.performed += val => _currentController.EnterAction();
         _controls.SpaceAction.Space.performed += val => _currentController.SpaceAction();
@@ -48,8 +48,8 @@ public class InputManager : MonoBehaviour {
         //_controls.NextTurn.NextPlayer.performed += val => GameManager.Instance.NextPlayer();
         //_controls.NextWorm.NextWorm.performed += val => GameManager.Instance.NextWorm();
         //_controls.SwapCameraMode.SwapCameraMode.performed += val => _currentController._cameraManager.SwapCameraMode();
-        _controls.PlayerMovement.Camera.performed += val => _camManager.SetRotationCamera(val.ReadValue<Vector2>());
-        _controls.PlayerMovement.Jump.performed += val => _currentController.CharacterJump();
+        _controls.PlayerMovement.Camera.performed += val => _camManager.ManualRotateCamera(val.ReadValue<Vector2>());
+        _controls.PlayerMovement.Jump.performed += val => _currentController.CharacterJump(val.ReadValue<float>());
         _controls.Enable();
 
     }

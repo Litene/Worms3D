@@ -1,6 +1,8 @@
 using System;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering.VirtualTexturing;
 
 // movement like worms, like it stops and continues
 // closer camera
@@ -24,11 +26,13 @@ public class PlayerController : MonoBehaviour {
     private float _horizontalInput;
     private Transform _cameraObject;
     private Rigidbody _rb;
-    private float _movementSpeed = 7;
+
     private float _rotationSpeed = 15;
     [SerializeField] private Vector3 targetDirection;
-    public CameraManager _cameraManager;
-    public bool IsGrounded;
+
+    //public CameraManager _cameraManager;
+
+    //spublic bool IsGrounded;
     public LayerMask groundLayer;
     [SerializeField] private Transform _groundChild;
     private CapsuleCollider _collider;
@@ -48,12 +52,170 @@ public class PlayerController : MonoBehaviour {
     private float _groundCheckRadiusMultiplier = 0.9f;
     private bool _canWalk;
 
+
+    [Header("new controller")] private Vector2 _playerInput;
+    private Vector3 _velocity, _desiredVelocity;
+    private float _maxAcceleration = 50f, _maxAirAcceleration = 18;
+    private float _movementSpeed = 7f;
+    [SerializeField] private bool _desiredJump;
+
+    private float _jumpHeight = 3;
+
+    //[SerializeField] private bool _onGround;
+    private float _maxGroundAngle = 25f, _maxStairAngle = 50f;
+    private float _minGroundDotProduct, _minStairDotProduct;
+    private Vector3 _contactNormal, _steepContactNormal;
+    private int _groundContactNormalCount, _steepContactNormalCount;
+    private int _maxAirJumps = 0;
+    private int _jumpPhase;
+    private int _stepsSinceLastGrounded, _stepsSinceLastJump;
+    private float _maxSnapSpeed = 100;
+    private float probeDistance = 1f; // increase value 
+    [SerializeField] private LayerMask _probeMask = -1, _stairMask = -1;
+    public OrbitCamera _orbitCamera;
+    [SerializeField] private Transform _playerInputSpace = default;
+    private bool OnGround => _groundContactNormalCount > 0;
+    private bool OnSteep => _steepContactNormalCount > 0;
+
+    private void HandleMovement() {
+      
+        UpdateState();
+        AdjustVelocity();
+        if (_desiredJump) {
+            _desiredJump = false;
+            Jump();
+        }
+
+        _rb.velocity = _velocity;
+        ClearState();
+    }
+
+    private float GetMinDot(int layer) {
+        return (_stairMask & (1 << layer)) == 0 ? _minGroundDotProduct : _minStairDotProduct;
+    }
+
+    private void ClearState() {
+        _groundContactNormalCount = _steepContactNormalCount = 0;
+        _contactNormal = _steepContactNormal = Vector3.zero;
+    }
+
+    public void CharacterJump(float input) {
+        _desiredJump |= input > 0.1f;
+    }
+
+    private void UpdateState() {
+        _stepsSinceLastGrounded += 1;
+        _stepsSinceLastGrounded = Mathf.Clamp(_stepsSinceLastGrounded, 0, int.MaxValue);
+        _stepsSinceLastJump += 1;
+        _stepsSinceLastJump = Mathf.Clamp(_stepsSinceLastJump, 0, Int32.MaxValue);
+        _velocity = _rb.velocity;
+        if (OnGround || SnapToGround()) {
+            _stepsSinceLastGrounded = 0;
+            _jumpPhase = 0;
+            if (_groundContactNormalCount > 1) {
+                _contactNormal.Normalize();
+            }
+        }
+        else {
+            _contactNormal = Vector3.up;
+        }
+    }
+
+    bool SnapToGround() {
+        if (_stepsSinceLastGrounded > 1 || _stepsSinceLastJump <= 2) return false;
+        
+        float speed = _velocity.magnitude;
+
+        if (speed > _maxSnapSpeed) return false;
+
+        if (!Physics.Raycast(_rb.position, Vector3.down, out RaycastHit hit, probeDistance)) return false;
+
+        if (hit.normal.y < GetMinDot(hit.collider.gameObject.layer)) return false;
+
+        _groundContactNormalCount = 1;
+        _contactNormal = hit.normal;
+        
+        float dot = Vector3.Dot(_velocity, hit.normal);
+        if (dot > 0f) {
+            _velocity = (_velocity - hit.normal * dot).normalized * speed;
+        }
+        return true;
+    }
+
+    private Vector3 ProjetOnContactPlane(Vector3 vector) {
+        return vector - _contactNormal * Vector3.Dot(vector, _contactNormal);
+    }
+
+    private void AdjustVelocity() {
+        Vector3 xAxis = ProjetOnContactPlane(Vector3.right).normalized;
+        Vector3 zAxis = ProjetOnContactPlane(Vector3.forward).normalized;
+
+        float currentX = Vector3.Dot(_velocity, xAxis);
+        float currentZ = Vector3.Dot(_velocity, zAxis);
+
+        float acceleration = OnGround ? _maxAcceleration : _maxAirAcceleration;
+        float maxChangeSpeed = acceleration * Time.deltaTime;
+
+        float newX = Mathf.MoveTowards(currentX, _desiredVelocity.x, maxChangeSpeed);
+        float newZ = Mathf.MoveTowards(currentZ, _desiredVelocity.z, maxChangeSpeed);
+        _velocity += xAxis * (newX - currentX) + zAxis * (newZ - currentZ);
+    }
+
+    private void OnValidate() {
+        _minGroundDotProduct = Mathf.Cos(_maxGroundAngle * Mathf.Deg2Rad);
+        _minStairDotProduct = Mathf.Cos(_maxStairAngle * Mathf.Deg2Rad);
+    }
+
+    private void Jump() {
+        if (OnGround || _jumpPhase < _maxAirJumps) {
+            _stepsSinceLastJump = 0;
+            _jumpPhase++;
+            float jumpSpeed = Mathf.Sqrt(-2f * Physics.gravity.y * _jumpHeight);
+            float alignedSpeed = Vector3.Dot(_velocity, _contactNormal);
+            if (alignedSpeed > 0f) {
+                jumpSpeed = Mathf.Max(jumpSpeed - alignedSpeed, 0);
+            }
+            _velocity += _contactNormal * jumpSpeed;
+        }
+    }
+    private void OnCollisionStay(Collision collision) => EvaluateCollision(collision);
+    private void OnCollisionExit(Collision collision) => EvaluateCollision(collision);
+
+    private void EvaluateCollision(Collision collision) {
+        float minDot = GetMinDot(collision.gameObject.layer);
+        for (int i = 0; i < collision.contactCount; i++) {
+            Vector3 normal = collision.GetContact(i).normal;
+            if (normal.y >= minDot) {
+                _groundContactNormalCount += 1;
+                _contactNormal += normal;
+            }
+            else if (normal.y > -0.01f) {
+                _steepContactNormalCount += 1;
+                _steepContactNormal += normal;
+            }
+
+            ToggleSlippery(normal.y);
+        }
+    }
+
+    private void ToggleSlippery(float normalY) {
+        if (normalY > 0.7f)  return;
+        
+        if (normalY < 0.3f) 
+            _rb.AddForce(Vector3.down * 10, ForceMode.Force);
+        
+       
+    }
+
     private void Awake() {
         _rb = GetComponent<Rigidbody>();
-        _cameraManager = FindObjectOfType<CameraManager>();
+        _orbitCamera = FindObjectOfType<OrbitCamera>();
         _groundChild = transform.Find("GroundCheckObject");
         _collider = GetComponent<CapsuleCollider>();
         if (Camera.main != null) _cameraObject = Camera.main.transform;
+
+        _playerInputSpace = FindObjectOfType<OrbitCamera>().transform;
+        OnValidate();
     }
 
     private void Start() {
@@ -62,9 +224,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     public void InitializePlayerTurn() {
-        // fill with logic for the player?
         DefaultToWalkingCheck();
-
         _canWalk = true;
     }
 
@@ -83,11 +243,14 @@ public class PlayerController : MonoBehaviour {
     }
 
     public void SetMoveVector(Vector2 moveVector) {
-        _horizontalInput = moveVector.x;
-        _verticalInput = moveVector.y;
+        _playerInput.x = moveVector.x;
+        _playerInput.y = moveVector.y;
+        _playerInput = Vector2.ClampMagnitude(_playerInput, 1f);
     }
 
     public void EnterAction() {
+        if (_orbitCamera.CameraIsPanning) return;
+        
         switch (turn) {
             case PlayerTurn.ChooseWorm:
                 InputManager.Instance.EnableMovement();
@@ -98,7 +261,7 @@ public class PlayerController : MonoBehaviour {
                 break;
             case PlayerTurn.Walk:
                 InputManager.Instance.DisableMovement();
-                _cameraManager.SwapCameraMode();
+                _orbitCamera.ToggleCameraMode(true); // needs to remake to swap mode
                 turn = PlayerTurn.SelectWeapon;
                 UIManager.Instance.ActivateMiddleTextImage(turn);
                 UIManager.Instance.ToggleAim(turn);
@@ -130,146 +293,52 @@ public class PlayerController : MonoBehaviour {
                 owner._currentWorm.ChangeCurrentWeapon(false);
                 break;
             case PlayerTurn.Shoot:
-                //owner._currentWorm.ShootCurrentWeapon(); // needs to be passthrough... Toggle zoom? 
                 break;
             default:
                 break;
         }
     }
 
-    private void HandleMovement() { // this overwrites the falling from gravity
-        _moveDir = _cameraObject.forward * _verticalInput;
-        _moveDir = _moveDir + _cameraObject.right * _horizontalInput;
-        _moveDir.Normalize();
-        _moveDir.y = 0; // clumsy solution. 
-        _rb.velocity = IsGrounded ? _moveDir * _movementSpeed : _moveDir * (_movementSpeed * 0.5f);
-    }
-
-    public void HandleAllMovement() {
-         HandleMovement(); // overwrites movement from player
-        HandleRotation();
-    }
-
-
     private void FixedUpdate() {
-        Gravity();
-        if (!(owner == GameManager.Instance.CurrentPlayer) || _cameraManager.CameraIsPanning) {
-            StopTransform();
-            return;
-        }
-
-        if (_cameraManager.lookMode == LookMode.FirstPerson || !_canWalk) {
-            HandleRotation();
-            return;
-        }
-
-        HandleAllMovement();
+        HandleMovement();
     }
-
-    private void LateUpdate() {
-        if (!(owner == GameManager.Instance.CurrentPlayer) || _cameraManager.CameraIsPanning) return;
-
-        if (owner != null && owner._currentWorm != null) {
-            _cameraManager.RotateCamera();
-            _cameraManager.FollowTarget(owner._currentWorm.transform);
-            _cameraManager.HandleCameraCollision();
-        }
-    }
-
+    
     private void StopTransform() {
         _rb.velocity = Vector3.zero;
-        _verticalInput = 0;
-        _horizontalInput = 0;
-    }
-
-    public void HandleRotation() {
-        if (_cameraManager.lookMode == LookMode.ThirdPerson) {
-            targetDirection = Vector3.zero;
-            targetDirection = _cameraObject.forward * _verticalInput;
-            targetDirection = targetDirection + _cameraObject.right * _horizontalInput;
-            targetDirection.Normalize();
-            targetDirection.y = 0;
-
-            if (targetDirection == Vector3.zero) {
-                targetDirection = transform.forward;
-            }
-
-            Quaternion targetRot = Quaternion.LookRotation(targetDirection);
-            Quaternion playerRot = Quaternion.Slerp(transform.rotation, targetRot, _rotationSpeed * Time.deltaTime);
-
-            transform.rotation = playerRot;
-        }
-        else {
-            // WATTAFAKKA
-            transform.localEulerAngles = new Vector3(transform.localRotation.x,
-                _cameraManager.GetCurrentEulerRotation().y,
-                transform.localRotation.z); // this isn't working needs to rotate.
-        }
+        _playerInput = Vector2.zero;
+       // _desiredVelocity = Vector3.zero;
+        
     }
 
     private void Update() {
-        if (turn == PlayerTurn.Walk && _moveDir != Vector3.zero && _canWalk) {
+        if (_playerInputSpace) {
+            Vector3 forward = _playerInputSpace.forward;
+            forward.y = 0;
+            forward.Normalize();
+            Vector3 right = _playerInputSpace.right;
+            right.y = 0;
+            right.Normalize();
+            _desiredVelocity = (forward * _playerInput.y + right * _playerInput.x) * _movementSpeed;
+        }
+        else {
+            _desiredVelocity = new Vector3(_playerInput.x, 0, _playerInput.y) * _movementSpeed;
+        }
+        
+        if (turn == PlayerTurn.Walk && _desiredVelocity != Vector3.zero && _canWalk) {
             if (walkTimer > 0) {
                 walkTimer -= Time.deltaTime;
             }
             else if (turn == PlayerTurn.Walk) {
-                // this cant be done enterACtion, this is called once in a while, every fifth second needs a gaurd cloud for starting timer. 
                 EnterAction();
                 ResetMovement();
                 _canWalk = false;
             }
         }
-
-        // if (startJumping) {
-        //     jumpPower += Time.deltaTime * 10f;
-        //     jumpPower = Mathf.Clamp(jumpPower, 1, 10);
-        // }
     }
-
     public void ResetMovement() {
         StopTransform();
-        InputManager.Instance.DisableMovement();
+        //InputManager.Instance.DisableMovement();
         walkTimer = 10;
     }
 
-    private void Gravity() {
-        // capsulecast
-        // do this better.
-        if (!IsGrounded) {
-            _inAirTimer = +Time.deltaTime;
-            _rb.AddForce(-Vector3.up * (_fallingSpeed * _inAirTimer), ForceMode.Acceleration);
-        }
-
-        IsGrounded = GroundCheck();
-    }
-
-    public bool GroundCheck() {
-        var sphereCastRadius = _collider.radius * _groundCheckRadiusMultiplier;
-        var sphereCastTravelDistance = _collider.bounds.extents.y - sphereCastRadius + _groundCheckDistance;
-        return Physics.SphereCast(_rb.position, sphereCastRadius, Vector3.down, out hit, sphereCastTravelDistance, groundLayer);
-    }
-
-    // public void SetJumpValue() {
-    //     if (!IsGrounded || _cameraManager.lookMode == LookMode.FirstPerson) {
-    //         jumpPower = 0;
-    //         return;
-    //     }
-    //
-    //     startJumping = !startJumping;
-    //     if (!startJumping) {
-    //         CharacterJump();
-    //         jumpPower = 0;
-    //     }
-    // }
-
-    private void OnDrawGizmos() {
-        if (hit.point != null) {
-            var collider = _collider as CapsuleCollider;
-            //Gizmos.(hit.point, collider.radius * 0.5f);
-        }
-    }
-
-    public void CharacterJump() {
-        _rb.AddForce((Vector3.up * 10), ForceMode.Impulse);
-    }
 }

@@ -17,7 +17,7 @@ public class Sniper : Weapon {
         shootTimer = 5;
     }
     public override GameObject Shoot(Transform muscle, ref int currentAmmo, ObjectPool<GameObject> pool,
-        Vector3 shootRotation, Worm worm, bool shooting, bool ButtonUp) {
+         Worm worm, bool shooting, bool ButtonUp, OrbitCamera cam) {
         if (currentAmmo <= 0) {
             return null;
         }
@@ -36,13 +36,18 @@ public class Sniper : Weapon {
             var poolObject = pool.Get();
             Physics.IgnoreCollision(poolObject.GetComponent<Collider>(),
                 worm.GetComponent<Collider>());
+            poolObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
             poolObject.transform.position = muscle.transform.position;
-            Vector3 dir = Quaternion.Euler(shootRotation) * Vector3.forward;
+            Vector3 dir = cam.transform.rotation * Vector3.forward;
+            dir.Normalize();
+            //Vector3 dir = Quaternion.Euler(shootRotation).eulerAngles /** Vector3.forward*/;
             poolObject.GetComponent<Rigidbody>().AddForce(dir * power, ForceMode.Impulse);
             poolObject.GetComponent<Damager>().SetDamage(Damage);
             shootTimer = 0;
             power = MinimumShootPower;
+            Debug.DrawRay(muscle.transform.position, dir * power, Color.red, 10f);
             return poolObject;
+            
         }
 
         return null;
@@ -54,7 +59,6 @@ public class Sniper : Weapon {
             power = Mathf.Clamp(power, MinimumShootPower,
                 MaximumShootPower); // this is a messy call
         }
-
         return true;
     }
 
