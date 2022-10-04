@@ -5,26 +5,31 @@ using UnityEngine.Pool;
 
 [CreateAssetMenu(menuName = "Weapon/MachineGun")]
 public class MachineGun : Weapon {
-    private float TimeBetweenBullets = 0.1f;
+    //private float TimeBetweenBullets = 0.1f;
     private float shootPower = 30;
     private float bulletUpTime;
-    private float _shootTimer;
+    //private float _shootTimer;
     private Vector3 bulletSpread;
-    
+
+    public override void InitializeWeapon() {
+        CoolDown = 0.1f;
+        ShootTimer = 0.1f;
+    }
+
     public override GameObject Shoot(Transform muscle, ref int currentAmmo, ObjectPool<GameObject> pool,  Worm worm, bool shooting, bool buttonUp, OrbitCamera cam) {
         if (currentAmmo <= 0) {
             return null;
         }
         
         if (!shooting) {
-            _shootTimer = 0;
+            ShootTimer = 0;
             return null;
         }
 
-        _shootTimer += Time.deltaTime;
+        ShootTimer += Time.deltaTime;
+        ShootTimer = Mathf.Clamp(ShootTimer, 0, CoolDown);
         
-        
-        if (_shootTimer > TimeBetweenBullets) {
+        if (ShootTimer >= CoolDown) {
             currentAmmo--;
             bulletSpread = new Vector3(Random.Range(-0.05f, 0.05f), Random.Range(-0.05f, 0.05f), Random.Range(-0.05f, 0.05f));
             var poolObject = pool.Get();
@@ -36,7 +41,7 @@ public class MachineGun : Weapon {
             dir.Normalize();
             poolObject.GetComponent<Rigidbody>().AddForce((dir + bulletSpread) * shootPower, ForceMode.Impulse);
             poolObject.GetComponent<Damager>().SetDamage(Damage);
-            _shootTimer = 0;
+            ShootTimer = 0;
             return poolObject;
         }
 

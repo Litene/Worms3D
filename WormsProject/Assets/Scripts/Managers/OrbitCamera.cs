@@ -9,11 +9,11 @@ public class OrbitCamera : MonoBehaviour {
     [SerializeField] private Transform _focus;
     [SerializeField, Range(0f, 20f)] private float _distance = 5f;
     [SerializeField, Min(0f)] private float _focusRadius = 1f;
-    [SerializeField, Range(0f, 1f)] private float _focusCentering = 0.5f;
+    //[SerializeField, Range(0f, 1f)] private float _focusCentering = 0.5f;
     [SerializeField, Range(0, 360)] private float _rotationSpeed = 10f;
     [SerializeField, Range(-89, 89)] private float _minVerticalAngle = -30, _maxVericalAngle = 60;
-    [SerializeField, Min(0f)] private float _alignDelay = 5f;
-    [SerializeField, Range(0f, 90f)] private float alignSmoothRange = 45f;
+    //[SerializeField, Min(0f)] private float _alignDelay = 5f;
+    //[SerializeField, Range(0f, 90f)] private float alignSmoothRange = 45f;
 
 
     private const int MaxCameraDistance = 5, MinCameraDistance = 0;
@@ -72,26 +72,13 @@ public class OrbitCamera : MonoBehaviour {
         _focusPoint = _focus.position;
     }
 
-
-    public Quaternion GetCurrentEulerRotation() {
-        // this needs to be changed. 
-
-        return Quaternion.LookRotation(transform.forward, transform.up);
-    }
-
     private void LateUpdate() {
         if (_focus == null) return;
 
         UpdateFocusPoint();
-        Quaternion lookRotation;
-        if (_manualRotation || AutomaticRotation()) {
-            ConstrainAngles();
-            lookRotation = Quaternion.Euler(_orbitAngles);
-        }
-        else {
-            lookRotation = transform.localRotation;
-        }
-
+        ConstrainAngles();
+        
+        Quaternion lookRotation = Quaternion.Euler(_orbitAngles);
         Vector3 lookDirection = lookRotation * Vector3.forward;
         Vector3 lookPosition = _focusPoint - lookDirection * _distance;
 
@@ -117,54 +104,14 @@ public class OrbitCamera : MonoBehaviour {
         if (input.x < -e || input.x > e || input.y < -e || input.y > e) {
             _orbitAngles += _rotationSpeed * Time.unscaledDeltaTime * input;
             _lastManualRotation += Time.unscaledDeltaTime;
-            _manualRotation = true;
-            return;
         }
-
-        _manualRotation = false;
-    }
-
-    private bool AutomaticRotation() {
-        if (Time.unscaledTime - _lastManualRotation < _alignDelay) {
-            return false;
-        }
-
-        Vector2 movement = new Vector2(_focusPoint.x - _previousFocusPoint.x, _focusPoint.z - _previousFocusPoint.z);
-        float movementDeltaSquare = movement.sqrMagnitude;
-        if (movementDeltaSquare < 0.0001f) {
-            return false;
-        }
-
-        float headingAngle = GetAngle(movement / Mathf.Sqrt(movementDeltaSquare));
-        float deltaAbs = Mathf.Abs(Mathf.DeltaAngle(_orbitAngles.y, headingAngle));
-        float rotationChange = _rotationSpeed * Mathf.Min(Time.unscaledDeltaTime, movementDeltaSquare);
-        if (deltaAbs < alignSmoothRange) {
-            rotationChange *= deltaAbs / alignSmoothRange;
-        }
-        else if (180f - deltaAbs < alignSmoothRange) {
-            rotationChange *= (180f - deltaAbs) / alignSmoothRange;
-        }
-
-        _orbitAngles.y = Mathf.MoveTowardsAngle(_orbitAngles.y, headingAngle, rotationChange);
-        return true;
-    }
-
-    private static float GetAngle(Vector2 direction) {
-        float angle = Mathf.Acos(direction.y) * Mathf.Rad2Deg;
-        return direction.x < 0f ? 360f - angle : angle;
     }
 
     private void UpdateFocusPoint() {
-        // happens here?
         _previousFocusPoint = _focusPoint;
         Vector3 targetPoint = _focus.position;
         if (_focusRadius > 0f) {
             float distance = Vector3.Distance(targetPoint, _focusPoint);
-            float t = Mathf.Pow(1f - _focusCentering, Time.deltaTime);
-            if (distance > _focusRadius) {
-                t = Mathf.Min(t, _focusRadius / distance);
-            }
-
             _focusPoint = Vector3.Lerp(targetPoint, _focusPoint, Time.unscaledDeltaTime);
         }
         else {

@@ -7,13 +7,14 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.PlayerLoop;
 using UnityEngine.Pool;
+using UnityEngine.Serialization;
 
 public class Worm : MonoBehaviour, IDamageable {
     [SerializeField, Range(0.1f, 10f)] private float _movementSpeed = 3f;
     public Weapon _currentWeapon;
     private Transform _weaponMuscle;
     private int _currentWeaponIndex;
-    [SerializeField] private int _ammo;
+    public int Ammo;
     public List<Weapon> AllWeapons;
     public GameObject pBullet;
     private ObjectPool<GameObject> _pool;
@@ -27,6 +28,7 @@ public class Worm : MonoBehaviour, IDamageable {
     public HealthSystem Health { get; set; }
     public int MaxHealth = 100;
     private bool _airControl;
+    [FormerlySerializedAs("currentMaxAmmo")] public int CurrentMaxAmmo;
 
     private void Awake() {
         _controller = GetComponent<PlayerController>();
@@ -65,13 +67,14 @@ public class Worm : MonoBehaviour, IDamageable {
     }
 
     public void ResetWeapon() {
-        
         // this needs to be called on correct worm, not all worms.
         if (_currentWeapon != null) {
             //_currentWeapon.PProjectile.GetComponent<Damager>().SetDamage(_currentWeapon.Damage);
-            _ammo = _currentWeapon.MaxAmmo;
+            Ammo = _currentWeapon.MaxAmmo;
+            CurrentMaxAmmo = _currentWeapon.MaxAmmo;
             _currentWeapon.InitializeWeapon();
         }
+
         UIManager.Instance.SetWeaponSprite(null);
 
         _chargingWeapon = false;
@@ -84,31 +87,40 @@ public class Worm : MonoBehaviour, IDamageable {
         }
     }
 
-    public void OnRelease() { // 
-        if (!(_currentWeapon is Sniper) || _controller.turn != PlayerTurn.Shoot ) { 
+    public void OnRelease() {
+        // 
+        if (!(_currentWeapon is Sniper) || _controller.turn != PlayerTurn.Shoot) {
             return;
         }
-        var poolObject = _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool,
-             this, true, true, _controller._orbitCamera);
+
+        var poolObject = _currentWeapon.Shoot(_weaponMuscle, ref Ammo, _pool,
+            this, true, true, _controller._orbitCamera);
+        // UIManager.Instance.UpdateBullets(_currentWeapon.MaxAmmo, _ammo, _controller.turn);
         if (poolObject != null) {
             StartCoroutine(ClearPoolObject(2, poolObject));
         }
     }
-    
+
     private IEnumerator ClearPoolObject(float bulletUpTime, GameObject poolObject) {
         yield return new WaitForSeconds(bulletUpTime);
         _pool.Release(poolObject);
     }
 
     private void Update() {
+        if (_currentWeapon != null) {
+            UIManager.Instance.UpdateBullets(CurrentMaxAmmo, Ammo, GameManager.Instance.CurrentPlayer);
+            UIManager.Instance.UpdateCoolDownTimer(_currentWeapon.ShootTimer, _currentWeapon.CoolDown, GameManager.Instance.CurrentPlayer);
+        }
+
         if (!(_controller.turn == PlayerTurn.Shoot))
             return;
 
-        var poolObject = _currentWeapon.Shoot(_weaponMuscle, ref _ammo, _pool, this, _shooting, false, _controller._orbitCamera);
+
+        var poolObject = _currentWeapon.Shoot(_weaponMuscle, ref Ammo, _pool, this, _shooting, false,
+            _controller._orbitCamera);
         if (poolObject != null) {
             StartCoroutine(ClearPoolObject(3, poolObject));
         }
-        
     }
 
     private PlayerColor _color;

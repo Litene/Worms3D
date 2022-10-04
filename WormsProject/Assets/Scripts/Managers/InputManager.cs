@@ -2,7 +2,7 @@
 using System;
 using UnityEngine;
 
-public class InputManager : MonoBehaviour {
+public class InputManager : MonoBehaviour { // why is this a singleton?
     private PlayerControls _controls;
     private Vector2 _movementInput;
     [SerializeField] private PlayerController _currentController;
@@ -33,21 +33,15 @@ public class InputManager : MonoBehaviour {
     public void SetCurrentController(PlayerController controller) {
         _currentController = controller;
     }
-     // subscribe a action to it, and change depending
-    
 
-    private void OnEnable() { // disable/pause _controls at the right time _controls 
+    private void OnEnable() {
         _controls ??= new PlayerControls();
         _camManager = FindObjectOfType<OrbitCamera>();
         _controls.PlayerMovement.Movement.performed += val => _currentController.SetMoveVector(val.ReadValue<Vector2>());
         _controls.PlayerSequence.EnterAction.performed += val => _currentController.EnterAction();
         _controls.SpaceAction.Space.performed += val => _currentController.SpaceAction();
-        //_controls.PlayerMovement.Shoot.started += val => _currentController.owner._currentWorm.StartCharging(); // Shoot, Split this
-        _controls.PlayerMovement.Shoot.performed += val => _currentController.owner._currentWorm.ShootCurrentWeapon(val.ReadValue<float>()); // shoot, split this
-        _controls.PlayerMovement.OnMouseRelease.canceled += val => _currentController.owner._currentWorm.OnRelease();
-        //_controls.NextTurn.NextPlayer.performed += val => GameManager.Instance.NextPlayer();
-        //_controls.NextWorm.NextWorm.performed += val => GameManager.Instance.NextWorm();
-        //_controls.SwapCameraMode.SwapCameraMode.performed += val => _currentController._cameraManager.SwapCameraMode();
+        _controls.PlayerMovement.Shoot.performed += val => _currentController.Owner._currentWorm.ShootCurrentWeapon(val.ReadValue<float>()); 
+        _controls.PlayerMovement.OnMouseRelease.canceled += val => _currentController.Owner._currentWorm.OnRelease();
         _controls.PlayerMovement.Camera.performed += val => _camManager.ManualRotateCamera(val.ReadValue<Vector2>());
         _controls.PlayerMovement.Jump.performed += val => _currentController.CharacterJump(val.ReadValue<float>());
         _controls.Enable();
@@ -68,5 +62,4 @@ public class InputManager : MonoBehaviour {
         _controls.Disable();
     }
     
-    //send to correct player . correct worm,
 }

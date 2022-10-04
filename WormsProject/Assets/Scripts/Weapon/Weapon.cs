@@ -10,6 +10,7 @@ public abstract class Weapon : ScriptableObject {
    public int Damage;
    public float CoolDown;
    public bool ShootOnRelease;
+   public float ShootTimer;
 
    public virtual GameObject Shoot(Transform muscle, ref int currentAmmo, ObjectPool<GameObject> _pool,
        Worm worm, bool shooting, bool buttonUp, OrbitCamera cam) {

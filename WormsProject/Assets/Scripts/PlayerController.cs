@@ -3,6 +3,8 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering.VirtualTexturing;
+using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 // movement like worms, like it stops and continues
 // closer camera
@@ -20,12 +22,15 @@ public enum PlayerTurn {
 
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour {
-    public Player owner;
+    public Player Owner;
+    private Worm _worm;
     private Vector3 _moveDir;
     private float _verticalInput;
     private float _horizontalInput;
     private Transform _cameraObject;
     private Rigidbody _rb;
+
+    public UnityEvent OnImpact;
 
     private float _rotationSpeed = 15;
     [SerializeField] private Vector3 targetDirection;
@@ -47,7 +52,7 @@ public class PlayerController : MonoBehaviour {
     private float _groundCheckRange;
     [SerializeField] private bool startJumping;
     [SerializeField] private float jumpPower;
-    [SerializeField] private float walkTimer;
+     public float WalkTimer;
     private float _groundCheckDistance = 0.05f;
     private float _groundCheckRadiusMultiplier = 0.9f;
     private bool _canWalk;
@@ -58,10 +63,12 @@ public class PlayerController : MonoBehaviour {
     private float _maxAcceleration = 50f, _maxAirAcceleration = 18;
     private float _movementSpeed = 7f;
     [SerializeField] private bool _desiredJump;
+    private const float MinFallTime = 1f;
+    private const float MinYVelocity = -10f;
 
     private float _jumpHeight = 3;
 
-    //[SerializeField] private bool _onGround;
+    private float _fallTime = 0;
     private float _maxGroundAngle = 25f, _maxStairAngle = 50f;
     private float _minGroundDotProduct, _minStairDotProduct;
     private Vector3 _contactNormal, _steepContactNormal;
@@ -74,11 +81,12 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private LayerMask _probeMask = -1, _stairMask = -1;
     public OrbitCamera _orbitCamera;
     [SerializeField] private Transform _playerInputSpace = default;
-    private bool OnGround => _groundContactNormalCount > 0;
+    private int _fallDamage;
+    private const float E = 2.71828175f;
+    private bool OnGround => _groundContactNormalCount > 0; //this could be the check, but this is true every frame
     private bool OnSteep => _steepContactNormalCount > 0;
 
     private void HandleMovement() {
-      
         UpdateState();
         AdjustVelocity();
         if (_desiredJump) {
@@ -123,7 +131,7 @@ public class PlayerController : MonoBehaviour {
 
     bool SnapToGround() {
         if (_stepsSinceLastGrounded > 1 || _stepsSinceLastJump <= 2) return false;
-        
+
         float speed = _velocity.magnitude;
 
         if (speed > _maxSnapSpeed) return false;
@@ -134,11 +142,12 @@ public class PlayerController : MonoBehaviour {
 
         _groundContactNormalCount = 1;
         _contactNormal = hit.normal;
-        
+
         float dot = Vector3.Dot(_velocity, hit.normal);
         if (dot > 0f) {
             _velocity = (_velocity - hit.normal * dot).normalized * speed;
         }
+
         return true;
     }
 
@@ -175,9 +184,21 @@ public class PlayerController : MonoBehaviour {
             if (alignedSpeed > 0f) {
                 jumpSpeed = Mathf.Max(jumpSpeed - alignedSpeed, 0);
             }
+
             _velocity += _contactNormal * jumpSpeed;
         }
     }
+
+    private void OnCollisionEnter(Collision collision) {
+        if (!(_fallTime > 0)) return;
+        
+        if (_fallTime > MinFallTime) {
+            _fallDamage = (int)(_fallTime * 10f);
+            _worm.Health.Damage(_worm, _fallDamage);
+        }
+        _fallTime = 0;
+    }
+
     private void OnCollisionStay(Collision collision) => EvaluateCollision(collision);
     private void OnCollisionExit(Collision collision) => EvaluateCollision(collision);
 
@@ -199,12 +220,10 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void ToggleSlippery(float normalY) {
-        if (normalY > 0.7f)  return;
-        
-        if (normalY < 0.3f) 
+        if (normalY > 0.7f) return;
+
+        if (normalY < 0.3f)
             _rb.AddForce(Vector3.down * 10, ForceMode.Force);
-        
-       
     }
 
     private void Awake() {
@@ -212,6 +231,7 @@ public class PlayerController : MonoBehaviour {
         _orbitCamera = FindObjectOfType<OrbitCamera>();
         _groundChild = transform.Find("GroundCheckObject");
         _collider = GetComponent<CapsuleCollider>();
+        _worm = GetComponent<Worm>();
         if (Camera.main != null) _cameraObject = Camera.main.transform;
 
         _playerInputSpace = FindObjectOfType<OrbitCamera>().transform;
@@ -220,7 +240,7 @@ public class PlayerController : MonoBehaviour {
 
     private void Start() {
         _groundCheckRange = _collider.bounds.extents.y + 0.01f;
-        walkTimer = 10;
+        WalkTimer = 10;
     }
 
     public void InitializePlayerTurn() {
@@ -230,7 +250,7 @@ public class PlayerController : MonoBehaviour {
 
     private void DefaultToWalkingCheck() {
         // this is run too early, latestart could solve it but its an uggly solution.
-        if (owner._worms.Count <= 1) {
+        if (Owner._worms.Count <= 1) {
             if (turn == PlayerTurn.ChooseWorm) {
                 turn = PlayerTurn.Walk;
                 InputManager.Instance.EnableMovement();
@@ -250,7 +270,7 @@ public class PlayerController : MonoBehaviour {
 
     public void EnterAction() {
         if (_orbitCamera.CameraIsPanning) return;
-        
+
         switch (turn) {
             case PlayerTurn.ChooseWorm:
                 InputManager.Instance.EnableMovement();
@@ -264,8 +284,8 @@ public class PlayerController : MonoBehaviour {
                 _orbitCamera.ToggleCameraMode(true); // needs to remake to swap mode
                 turn = PlayerTurn.SelectWeapon;
                 UIManager.Instance.ActivateMiddleTextImage(turn);
-                UIManager.Instance.ToggleAim(turn);
-                UIManager.Instance.SetWeaponSprite(owner._currentWorm._currentWeapon);
+                UIManager.Instance.ToggleAim(GameManager.Instance.CurrentPlayer);
+                UIManager.Instance.SetWeaponSprite(_worm._currentWeapon);
                 ResetMovement();
                 break;
             case PlayerTurn.SelectWeapon:
@@ -275,7 +295,7 @@ public class PlayerController : MonoBehaviour {
             case PlayerTurn.Shoot:
                 GameManager.Instance.NextPlayer();
                 turn = PlayerTurn.ChooseWorm;
-                UIManager.Instance.ToggleAim(turn);
+                UIManager.Instance.ToggleAim(GameManager.Instance.CurrentPlayer);
                 UIManager.Instance.ActivateMiddleTextImage(turn);
                 //DefaultToWalkingCheck();
                 break;
@@ -290,7 +310,7 @@ public class PlayerController : MonoBehaviour {
                 GameManager.Instance.NextWorm();
                 break;
             case PlayerTurn.SelectWeapon:
-                owner._currentWorm.ChangeCurrentWeapon(false);
+                Owner._currentWorm.ChangeCurrentWeapon(false);
                 break;
             case PlayerTurn.Shoot:
                 break;
@@ -302,15 +322,17 @@ public class PlayerController : MonoBehaviour {
     private void FixedUpdate() {
         HandleMovement();
     }
-    
+
     private void StopTransform() {
         _rb.velocity = Vector3.zero;
         _playerInput = Vector2.zero;
-       // _desiredVelocity = Vector3.zero;
-        
+        // _desiredVelocity = Vector3.zero;
     }
 
     private void Update() {
+        FallTimer(_rb.velocity.y);
+        UIManager.Instance.UpdateWalkingTimer(GameManager.Instance.CurrentPlayer);
+        
         if (_playerInputSpace) {
             Vector3 forward = _playerInputSpace.forward;
             forward.y = 0;
@@ -323,10 +345,10 @@ public class PlayerController : MonoBehaviour {
         else {
             _desiredVelocity = new Vector3(_playerInput.x, 0, _playerInput.y) * _movementSpeed;
         }
-        
+
         if (turn == PlayerTurn.Walk && _desiredVelocity != Vector3.zero && _canWalk) {
-            if (walkTimer > 0) {
-                walkTimer -= Time.deltaTime;
+            if (WalkTimer > 0) {
+                WalkTimer -= Time.deltaTime;
             }
             else if (turn == PlayerTurn.Walk) {
                 EnterAction();
@@ -335,10 +357,29 @@ public class PlayerController : MonoBehaviour {
             }
         }
     }
+
     public void ResetMovement() {
         StopTransform();
         //InputManager.Instance.DisableMovement();
-        walkTimer = 10;
+        WalkTimer = 10;
     }
 
+    private void FallTimer(float currentYVelocity) {
+        // last highest velocity, return tuple... 
+        //float minFallTime = 5.5f;
+        //float minYVelocity = -10f; //change to a good 
+
+        if (currentYVelocity < 0) _fallTime += Time.deltaTime;
+
+
+        //
+        // //Debug.Log(currentYVelocity);
+        // if (_fallTime > minFallTime) {
+        //     if (currentYVelocity < minYVelocity) {
+        //         //return (_fallTime * currentYVelocity);
+        //     }
+        // }
+        //
+        // return new Tuple<float, float>(0, 0);
+    }
 }

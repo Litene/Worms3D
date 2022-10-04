@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -50,6 +51,15 @@ public class UIManager : MonoBehaviour {
     private Image[] _allHealthbars;
 
     public Image Image;
+    [SerializeField] private TextMeshProUGUI _weaponCooldown;
+    [SerializeField] private TextMeshProUGUI _weaponCooldownText;
+
+    [SerializeField] private TextMeshProUGUI _bulletCountText;
+    [SerializeField] private TextMeshProUGUI _bulletCount;
+
+    [SerializeField] private TextMeshProUGUI _walkTimer;
+    [SerializeField] private TextMeshProUGUI _walkTimerText;
+
 
     private Image _timeToWalkImage;
     private Image _timeToShootImage;
@@ -67,6 +77,99 @@ public class UIManager : MonoBehaviour {
     private List<Image> _middleScreenImages = new List<Image>();
     private Image _currentPlayerCornerImage;
 
+    private TextMeshProUGUI _walkingTimerText;
+    private TextMeshProUGUI _walkingTimerValue;
+
+    [SerializeField] private List<GameObject> _objectsToDeactivateOnWin;
+    
+    
+
+    public void UpdateBullets(int maxAmmo, int currentBullets, Player currentPlayer) {
+        if (currentPlayer == null || currentPlayer._currentWorm == null ||
+            currentPlayer._currentWorm._controller == null) {
+            return;
+        }
+
+        var currentWorm = currentPlayer._currentWorm;
+        if (currentWorm._controller.turn != PlayerTurn.Shoot) {
+            if (_bulletCountText.gameObject.activeInHierarchy) {
+                _bulletCountText.gameObject.SetActive(false);
+                _bulletCount.gameObject.SetActive(false);
+                return;
+            }
+
+            return;
+        }
+
+        if (!_bulletCountText.gameObject.activeInHierarchy) {
+            _bulletCountText.gameObject.SetActive(true);
+            _bulletCount.gameObject.SetActive(true);
+        }
+
+        _bulletCountText.text = $"{currentWorm.Ammo}/{currentWorm._currentWeapon.MaxAmmo}";
+    }
+
+    public void UpdateWalkingTimer(Player currentPlayer) {
+        if (currentPlayer == null || currentPlayer._currentWorm == null ||
+            currentPlayer._currentWorm._controller == null) {
+            return;
+        }
+
+        var currentController = currentPlayer._currentWorm._controller;
+
+
+        if (currentController.turn != PlayerTurn.Walk) {
+            if (_walkingTimerText.gameObject.activeInHierarchy) {
+                _walkingTimerText.gameObject.SetActive(false);
+                _walkingTimerValue.gameObject.SetActive(false);
+                return;
+            }
+
+            return;
+        }
+
+
+        if (!_walkingTimerText.gameObject.activeInHierarchy) {
+            _walkingTimerText.gameObject.SetActive(true);
+            _walkingTimerValue.gameObject.SetActive(true);
+        }
+
+        _walkingTimerValue.text = currentController.WalkTimer.ToString("#0.00");
+    }
+
+    public void UpdateCoolDownTimer(float time, float totalCooldown, Player currentPlayer) {
+        if (currentPlayer == null || currentPlayer._currentWorm == null ||
+            currentPlayer._currentWorm._controller == null) {
+            return;
+        }
+        var currentWorm = currentPlayer._currentWorm;
+        // redundancy in code, should be cleaned (working) Generic method should replace inactivate activate
+        if (currentWorm._controller.turn != PlayerTurn.Shoot || currentWorm._currentWeapon is MachineGun) {
+            if (_weaponCooldown.gameObject.activeInHierarchy) {
+                _weaponCooldown.gameObject.SetActive(false);
+                _weaponCooldownText.gameObject.SetActive(false);
+                return;
+            }
+
+            return;
+        }
+
+        if (!_weaponCooldown.gameObject.activeInHierarchy) {
+            _weaponCooldown.gameObject.SetActive(true);
+            _weaponCooldownText.gameObject.SetActive(true);
+        }
+
+
+        if (currentWorm._currentWeapon.ShootTimer == 0) {
+            _weaponCooldownText.gameObject.SetActive(false);
+            return;
+        }
+
+        _weaponCooldownText.gameObject.SetActive(true);
+        _weaponCooldownText.text =
+            (currentWorm._currentWeapon.CoolDown - currentWorm._currentWeapon.ShootTimer).ToString("#0.00");
+    }
+
     public void SetWeaponSprite(Weapon currentWeapon) {
         // you could refactor to just have the weapon have the sprite, this makes it so you can just call 
         if (currentWeapon is Sniper) {
@@ -82,6 +185,7 @@ public class UIManager : MonoBehaviour {
         }
     }
 
+
     public void SetupHealthBars(int amountOfPlayers) {
         for (int i = 0; i < amountOfPlayers; i++) {
             _allHealthbars[i].transform.parent.gameObject.SetActive(true);
@@ -96,28 +200,36 @@ public class UIManager : MonoBehaviour {
                     if (_blueMaxHealth == null) {
                         _blueMaxHealth = player.GetMaxHealth();
                     }
-                    var blueBarValue = Mathf.InverseLerp(0, _blueMaxHealth ?? player.GetMaxHealth(), player.GetTotalHealth());
+
+                    var blueBarValue = Mathf.InverseLerp(0, _blueMaxHealth ?? player.GetMaxHealth(),
+                        player.GetTotalHealth());
                     _blueHealth.fillAmount = blueBarValue;
                     break;
                 case PlayerColor.Yellow:
                     if (_yellowMaxHealth == null) {
                         _yellowMaxHealth = player.GetMaxHealth();
                     }
-                    var yellowBarValue = Mathf.InverseLerp(0, _yellowMaxHealth ?? player.GetMaxHealth(), player.GetTotalHealth());
+
+                    var yellowBarValue = Mathf.InverseLerp(0, _yellowMaxHealth ?? player.GetMaxHealth(),
+                        player.GetTotalHealth());
                     _yellowHealth.fillAmount = yellowBarValue;
                     break;
                 case PlayerColor.Purple:
                     if (_purpleMaxHealth == null) {
                         _purpleMaxHealth = player.GetMaxHealth();
                     }
-                    var purpleBarValue = Mathf.InverseLerp(0, _purpleMaxHealth ?? player.GetMaxHealth(), player.GetTotalHealth());
+
+                    var purpleBarValue = Mathf.InverseLerp(0, _purpleMaxHealth ?? player.GetMaxHealth(),
+                        player.GetTotalHealth());
                     _purpleHealth.fillAmount = purpleBarValue;
                     break;
                 case PlayerColor.Red:
                     if (_redMaxHealth == null) {
                         _redMaxHealth = player.GetMaxHealth();
                     }
-                    var redBarValue = Mathf.InverseLerp(0, _redMaxHealth ?? player.GetMaxHealth(), player.GetTotalHealth());
+
+                    var redBarValue = Mathf.InverseLerp(0, _redMaxHealth ?? player.GetMaxHealth(),
+                        player.GetTotalHealth());
                     _redHealth.fillAmount = redBarValue;
                     break;
                 default:
@@ -127,7 +239,7 @@ public class UIManager : MonoBehaviour {
     }
 
     private void Awake() {
-         Hud = GameObject.Find("Hud");
+        Hud = GameObject.Find("Hud");
         _aim = Hud.transform.Find("Aim").GetComponent<Image>();
         //_currentPlayer = Hud.transform.Find("CurrentPlayerHeader").transform.Find("CurrentPlayer").GetComponent<TextMeshProUGUI>();
         _middleScreenTextObject = Hud.transform.Find("MiddleText");
@@ -146,6 +258,12 @@ public class UIManager : MonoBehaviour {
         _redHealth = GameObject.Find("RedHealth").GetComponent<Image>();
         _purpleHealth = GameObject.Find("PurpleHealth").GetComponent<Image>();
         _yellowHealth = GameObject.Find("YellowHealth").GetComponent<Image>();
+        _weaponCooldown = GameObject.Find("WeaponCooldown").GetComponent<TextMeshProUGUI>();
+        _weaponCooldownText = GameObject.Find("WeaponCooldownText").GetComponent<TextMeshProUGUI>();
+        _bulletCount = GameObject.Find("BulletCount").GetComponent<TextMeshProUGUI>();
+        _bulletCountText = GameObject.Find("BulletCountText").GetComponent<TextMeshProUGUI>();
+        _walkingTimerText = GameObject.Find("WalkingTimerText").GetComponent<TextMeshProUGUI>();
+        _walkingTimerValue = GameObject.Find("WalkingTimerValue").GetComponent<TextMeshProUGUI>();
     }
 
     private void Start() {
@@ -197,6 +315,9 @@ public class UIManager : MonoBehaviour {
 
     public void ActivateEndscreen(PlayerColor player) {
         ReturnPlayerImage(player);
+        foreach (var endObject in _objectsToDeactivateOnWin) {
+            endObject.SetActive(false);
+        }
         StartCoroutine(FadeInEndScreen());
     }
 
@@ -224,8 +345,12 @@ public class UIManager : MonoBehaviour {
         }
     }
 
-    public void ToggleAim(PlayerTurn turn) {
-        if (turn == PlayerTurn.Shoot) _aim.enabled = true;
+    public void ToggleAim(Player currentPlayer) {
+        if (currentPlayer == null || currentPlayer._currentWorm == null ||
+            currentPlayer._currentWorm._controller == null) {
+            return;
+        }
+        if (currentPlayer._currentWorm._controller.turn == PlayerTurn.Shoot) _aim.enabled = true;
         else _aim.enabled = false;
     }
 

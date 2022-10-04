@@ -10,20 +10,25 @@ public class Sniper : Weapon {
     public float MinimumShootPower = 30; // fix these
     private const float _bulletUptime = 3;
     private float power;
-    private const float coolDown = 3;
-    private float shootTimer;
+
+    //private const float coolDown = 3;
+
+    //public float shootTimer;
     public override void InitializeWeapon() {
         ShootOnRelease = true;
-        shootTimer = 5;
+        ShootTimer = 3; 
+        CoolDown = 3;
     }
+
     public override GameObject Shoot(Transform muscle, ref int currentAmmo, ObjectPool<GameObject> pool,
-         Worm worm, bool shooting, bool ButtonUp, OrbitCamera cam) {
+        Worm worm, bool shooting, bool ButtonUp, OrbitCamera cam) {
         if (currentAmmo <= 0) {
             return null;
         }
 
-        shootTimer += Time.deltaTime;
-        
+        ShootTimer += Time.deltaTime;
+
+        ShootTimer = Mathf.Clamp(ShootTimer, 0, CoolDown);
         if (shooting) {
             ChargePower(shooting);
         }
@@ -31,7 +36,7 @@ public class Sniper : Weapon {
             return null;
         }
 
-        if (ShootOnRelease && shootTimer > coolDown && ButtonUp) {
+        if (ShootOnRelease && ShootTimer >= CoolDown && ButtonUp) {
             currentAmmo--;
             var poolObject = pool.Get();
             Physics.IgnoreCollision(poolObject.GetComponent<Collider>(),
@@ -43,11 +48,10 @@ public class Sniper : Weapon {
             //Vector3 dir = Quaternion.Euler(shootRotation).eulerAngles /** Vector3.forward*/;
             poolObject.GetComponent<Rigidbody>().AddForce(dir * power, ForceMode.Impulse);
             poolObject.GetComponent<Damager>().SetDamage(Damage);
-            shootTimer = 0;
+            ShootTimer = 0;
             power = MinimumShootPower;
-            Debug.DrawRay(muscle.transform.position, dir * power, Color.red, 10f);
-            return poolObject;
             
+            return poolObject;
         }
 
         return null;
@@ -59,6 +63,7 @@ public class Sniper : Weapon {
             power = Mathf.Clamp(power, MinimumShootPower,
                 MaximumShootPower); // this is a messy call
         }
+
         return true;
     }
 
