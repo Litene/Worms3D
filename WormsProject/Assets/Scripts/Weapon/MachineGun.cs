@@ -5,10 +5,8 @@ using UnityEngine.Pool;
 
 [CreateAssetMenu(menuName = "Weapon/MachineGun")]
 public class MachineGun : Weapon {
-    //private float TimeBetweenBullets = 0.1f;
     private float shootPower = 30;
     private float bulletUpTime;
-    //private float _shootTimer;
     private Vector3 bulletSpread;
 
     public override void InitializeWeapon() {

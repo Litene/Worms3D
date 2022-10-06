@@ -8,8 +8,6 @@ public class InputManager : MonoBehaviour { // why is this a singleton?
     [SerializeField] private PlayerController _currentController;
     private Vector2 _cameraInput;
     [SerializeField] private OrbitCamera _camManager;
-   
-
 
     private static InputManager _instance;
     public static InputManager Instance {
@@ -40,8 +38,8 @@ public class InputManager : MonoBehaviour { // why is this a singleton?
         _controls.PlayerMovement.Movement.performed += val => _currentController.SetMoveVector(val.ReadValue<Vector2>());
         _controls.PlayerSequence.EnterAction.performed += val => _currentController.EnterAction();
         _controls.SpaceAction.Space.performed += val => _currentController.SpaceAction();
-        _controls.PlayerMovement.Shoot.performed += val => _currentController.Owner._currentWorm.ShootCurrentWeapon(val.ReadValue<float>()); 
-        _controls.PlayerMovement.OnMouseRelease.canceled += val => _currentController.Owner._currentWorm.OnRelease();
+        _controls.PlayerMovement.Shoot.performed += val => _currentController.Owner.CurrentWorm.ShootCurrentWeapon(val.ReadValue<float>()); 
+        _controls.PlayerMovement.OnMouseRelease.canceled += val => _currentController.Owner.CurrentWorm.OnRelease();
         _controls.PlayerMovement.Camera.performed += val => _camManager.ManualRotateCamera(val.ReadValue<Vector2>());
         _controls.PlayerMovement.Jump.performed += val => _currentController.CharacterJump(val.ReadValue<float>());
         _controls.Enable();

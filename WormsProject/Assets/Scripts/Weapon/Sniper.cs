@@ -6,14 +6,10 @@ using UnityEngine.Pool;
 [CreateAssetMenu(menuName = "Weapon/Sniper")]
 public class Sniper : Weapon {
     //private float shootPower;
-    public float MaximumShootPower = 100; // fix these
-    public float MinimumShootPower = 30; // fix these
-    private const float _bulletUptime = 3;
-    private float power;
+    public float MaximumShootPower = 100; 
+    public float MinimumShootPower = 30;
+    private float _power;
 
-    //private const float coolDown = 3;
-
-    //public float shootTimer;
     public override void InitializeWeapon() {
         ShootOnRelease = true;
         ShootTimer = 3; 
@@ -48,11 +44,11 @@ public class Sniper : Weapon {
             var damager = poolObject.GetComponent<Damager>();
             //Vector3 dir = Quaternion.Euler(shootRotation).eulerAngles /** Vector3.forward*/;
             damager.Explosive = true;
-            poolObject.GetComponent<Rigidbody>().AddForce(dir * power, ForceMode.Impulse);
+            poolObject.GetComponent<Rigidbody>().AddForce(dir * _power, ForceMode.Impulse);
             damager.SetDamage(Damage);
             damager.SetReferences(poolObject, pool);
             ShootTimer = 0;
-            power = MinimumShootPower;
+            _power = MinimumShootPower;
             
             return poolObject;
         }
@@ -64,14 +60,13 @@ public class Sniper : Weapon {
 
     private bool ChargePower(bool HoldingButton) {
         if (HoldingButton) {
-            power += Time.deltaTime * 10f;
-            power = Mathf.Clamp(power, MinimumShootPower,
-                MaximumShootPower); // this is a messy call
+            _power += Time.deltaTime * 10f;
+            _power = Mathf.Clamp(_power, MinimumShootPower,
+                MaximumShootPower); 
         }
 
         return true;
     }
 
 
-    //can't start coroutines from non monobehavior.. needs to call worm.clearpool or something, maybe shoot should return the projectile? and 
 }

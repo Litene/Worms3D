@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class Utility : MonoBehaviour
 {
-    public static GameObject GetCorrectPrefab(PlayerColor color) { // messy solution
+    public static GameObject GetCorrectPrefab(PlayerColor color) { 
         switch (color) {
             case PlayerColor.Blue:
                 return Resources.Load("BluePlayer") as GameObject;

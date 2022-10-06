@@ -3,24 +3,24 @@ using System.Collections.Generic;
 using UnityEngine;
 [System.Serializable]
 public class HealthSystem {
-    private int health;
-    private int healthMax;
+    private int _health;
+    private int _healthMax;
     
     public HealthSystem(int healthMax) {
-        this.healthMax = healthMax;
-        health = healthMax;
+        this._healthMax = healthMax;
+        _health = healthMax;
     }
 
     public int GetHealth() {
-        return health;
+        return _health;
     }
 
     public void Damage(Worm objectToTakeDamage, int damageAmount = 1) {
-        health -= damageAmount;
-        if (health < 0)
-            health = 0;
+        _health -= damageAmount;
+        if (_health < 0)
+            _health = 0;
 
-        if (health == 0) // hmm this is weird.. check later with debugs. 
+        if (_health == 0) 
             Die(objectToTakeDamage);
     }
     
@@ -29,14 +29,14 @@ public class HealthSystem {
     }
 
     public void Heal(int healAmount) {
-        health += healAmount;
-        if (health > healthMax)
-            health = healthMax;
+        _health += healAmount;
+        if (_health > _healthMax)
+            _health = _healthMax;
     }
     
 }
 
-public interface IDamageable //interface so that objects can take damage
+public interface IDamageable 
 {
     public HealthSystem Health { get; set; }
     public GameObject ReturnGameObject();

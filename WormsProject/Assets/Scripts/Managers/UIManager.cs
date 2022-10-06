@@ -84,14 +84,14 @@ public class UIManager : MonoBehaviour {
     
     
 
-    public void UpdateBullets(int maxAmmo, int currentBullets, Player currentPlayer) {
-        if (currentPlayer == null || currentPlayer._currentWorm == null ||
-            currentPlayer._currentWorm._controller == null) {
+    public void UpdateBullets(Player currentPlayer) {
+        if (currentPlayer == null || currentPlayer.CurrentWorm == null ||
+            currentPlayer.CurrentWorm.Controller == null) {
             return;
         }
 
-        var currentWorm = currentPlayer._currentWorm;
-        if (currentWorm._controller.turn != PlayerTurn.Shoot) {
+        var currentWorm = currentPlayer.CurrentWorm;
+        if (currentWorm.Controller.Turn != PlayerTurn.Shoot) {
             if (_bulletCountText.gameObject.activeInHierarchy) {
                 _bulletCountText.gameObject.SetActive(false);
                 _bulletCount.gameObject.SetActive(false);
@@ -106,19 +106,19 @@ public class UIManager : MonoBehaviour {
             _bulletCount.gameObject.SetActive(true);
         }
 
-        _bulletCountText.text = $"{currentWorm.Ammo}/{currentWorm._currentWeapon.MaxAmmo}";
+        _bulletCountText.text = $"{currentWorm.Ammo}/{currentWorm.CurrentWeapon.MaxAmmo}";
     }
 
     public void UpdateWalkingTimer(Player currentPlayer) {
-        if (currentPlayer == null || currentPlayer._currentWorm == null ||
-            currentPlayer._currentWorm._controller == null) {
+        if (currentPlayer == null || currentPlayer.CurrentWorm == null ||
+            currentPlayer.CurrentWorm.Controller == null) {
             return;
         }
 
-        var currentController = currentPlayer._currentWorm._controller;
+        var currentController = currentPlayer.CurrentWorm.Controller;
 
 
-        if (currentController.turn != PlayerTurn.Walk) {
+        if (currentController.Turn != PlayerTurn.Walk) {
             if (_walkingTimerText.gameObject.activeInHierarchy) {
                 _walkingTimerText.gameObject.SetActive(false);
                 _walkingTimerValue.gameObject.SetActive(false);
@@ -138,13 +138,13 @@ public class UIManager : MonoBehaviour {
     }
 
     public void UpdateCoolDownTimer(float time, float totalCooldown, Player currentPlayer) {
-        if (currentPlayer == null || currentPlayer._currentWorm == null ||
-            currentPlayer._currentWorm._controller == null) {
+        if (currentPlayer == null || currentPlayer.CurrentWorm == null ||
+            currentPlayer.CurrentWorm.Controller == null) {
             return;
         }
-        var currentWorm = currentPlayer._currentWorm;
+        var currentWorm = currentPlayer.CurrentWorm;
         // redundancy in code, should be cleaned (working) Generic method should replace inactivate activate
-        if (currentWorm._controller.turn != PlayerTurn.Shoot || currentWorm._currentWeapon is MachineGun) {
+        if (currentWorm.Controller.Turn != PlayerTurn.Shoot || currentWorm.CurrentWeapon is MachineGun) {
             if (_weaponCooldown.gameObject.activeInHierarchy) {
                 _weaponCooldown.gameObject.SetActive(false);
                 _weaponCooldownText.gameObject.SetActive(false);
@@ -160,18 +160,17 @@ public class UIManager : MonoBehaviour {
         }
 
 
-        if (currentWorm._currentWeapon.ShootTimer == 0) {
+        if (currentWorm.CurrentWeapon.ShootTimer == 0) {
             _weaponCooldownText.gameObject.SetActive(false);
             return;
         }
 
         _weaponCooldownText.gameObject.SetActive(true);
         _weaponCooldownText.text =
-            (currentWorm._currentWeapon.CoolDown - currentWorm._currentWeapon.ShootTimer).ToString("#0.00");
+            (currentWorm.CurrentWeapon.CoolDown - currentWorm.CurrentWeapon.ShootTimer).ToString("#0.00");
     }
 
     public void SetWeaponSprite(Weapon currentWeapon) {
-        // you could refactor to just have the weapon have the sprite, this makes it so you can just call 
         if (currentWeapon is Sniper) {
             _targetWeaponSpriteImage.color = Visible;
             _targetWeaponSpriteImage.sprite = _sniperRifle;
@@ -195,7 +194,7 @@ public class UIManager : MonoBehaviour {
 
     public void UpdateHealth() {
         foreach (var player in GameManager.Instance.GetPlayers()) {
-            switch (player.color) {
+            switch (player.Color) {
                 case PlayerColor.Blue:
                     if (_blueMaxHealth == null) {
                         _blueMaxHealth = player.GetMaxHealth();
@@ -241,9 +240,7 @@ public class UIManager : MonoBehaviour {
     private void Awake() {
         Hud = GameObject.Find("Hud");
         _aim = Hud.transform.Find("Aim").GetComponent<Image>();
-        //_currentPlayer = Hud.transform.Find("CurrentPlayerHeader").transform.Find("CurrentPlayer").GetComponent<TextMeshProUGUI>();
         _middleScreenTextObject = Hud.transform.Find("MiddleText");
-        //_currentWeapon = Hud.transform.Find("CurrentWeapon").GetComponent<TextMeshProUGUI>();
         _selectWormImage = _middleScreenTextObject.Find("NextWormImage").GetComponent<Image>();
         _timeToShootImage = _middleScreenTextObject.Find("TimeToShoot").GetComponent<Image>();
         _timeToWalkImage = _middleScreenTextObject.Find("TimeToWalk").GetComponent<Image>();
@@ -268,7 +265,6 @@ public class UIManager : MonoBehaviour {
 
     private void Start() {
         _aim.enabled = false;
-        //_currentWeapon.enabled = false;
         _middleScreenImages.Add(_timeToShootImage);
         _middleScreenImages.Add(_timeToWalkImage);
         _middleScreenImages.Add(_selectWormImage);
@@ -296,7 +292,6 @@ public class UIManager : MonoBehaviour {
     }
 
     public Sprite ReturnPlayerImage(PlayerColor player) {
-        // call from GameManager.
         switch (player) {
             case PlayerColor.Blue:
                 _targetWinner.sprite = _bluePlayer;
@@ -327,7 +322,6 @@ public class UIManager : MonoBehaviour {
         }
 
         switch (turn) {
-            // set in a coroutine to only have it on screen for a little while. 
             case PlayerTurn.ChooseWorm:
                 _selectWormImage.enabled = true;
                 break;
@@ -346,11 +340,11 @@ public class UIManager : MonoBehaviour {
     }
 
     public void ToggleAim(Player currentPlayer) {
-        if (currentPlayer == null || currentPlayer._currentWorm == null ||
-            currentPlayer._currentWorm._controller == null) {
+        if (currentPlayer == null || currentPlayer.CurrentWorm == null ||
+            currentPlayer.CurrentWorm.Controller == null) {
             return;
         }
-        if (currentPlayer._currentWorm._controller.turn == PlayerTurn.Shoot) _aim.enabled = true;
+        if (currentPlayer.CurrentWorm.Controller.Turn == PlayerTurn.Shoot) _aim.enabled = true;
         else _aim.enabled = false;
     }
 
@@ -366,7 +360,7 @@ public class UIManager : MonoBehaviour {
         while (_endScreenBackground.color != Visible) {
             foreach (Image image in _endScreen) {
                 image.color =
-                    Color.Lerp(image.color, Visible, LerpValue * Time.deltaTime); // should it be time.deltatime
+                    Color.Lerp(image.color, Visible, LerpValue * Time.deltaTime); 
             }
 
             yield return new WaitForEndOfFrame();

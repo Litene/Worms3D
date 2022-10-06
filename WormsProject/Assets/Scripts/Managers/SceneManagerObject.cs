@@ -67,8 +67,6 @@ public class SceneManagerObject : MonoBehaviour {
 
     public void StartTheGame() {
         StartCoroutine(FadeOut());
-        //SceneManager.LoadSceneAsync("GameScene", LoadSceneMode.Single);
-        // change this to Next UI, Canvasgroup with fade. 
     }
 
     public void BeginBattle() {

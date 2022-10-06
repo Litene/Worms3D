@@ -37,7 +37,7 @@ public class GameManager : MonoBehaviour {
         // wait wat?
         get { return _currentPlayer; }
         set {
-            UIManager.Instance.SetCurrentPlayer(value.color);
+            UIManager.Instance.SetCurrentPlayer(value.Color);
             _currentPlayer = value;
         }
     }
@@ -56,8 +56,8 @@ public class GameManager : MonoBehaviour {
         _settings = FindObjectOfType<GameSettings>();
         if (!_settings) return;
 
-        AmountOfPlayers = _settings.amountOfPlayers;
-        _amountOfWorms = _settings.amountOfWorms;
+        AmountOfPlayers = _settings.AmountOfPlayers;
+        _amountOfWorms = _settings.AmountOfWorms;
         SpawnOffset = new Vector3(0, 0.75f, 0);
         StartGame();
     }
@@ -88,8 +88,8 @@ public class GameManager : MonoBehaviour {
 
     private IEnumerator InitializeWorms() {
         yield return new WaitForEndOfFrame();
-        foreach (var worm in CurrentPlayer._worms) {
-            worm._controller.InitializePlayerTurn();
+        foreach (var worm in CurrentPlayer.Worms) {
+            worm.Controller.InitializePlayerTurn();
         }
 
         CurrentPlayer.NextWorm(true);
@@ -120,10 +120,10 @@ public class GameManager : MonoBehaviour {
         }
     }
 
-    public void RemoveDeadPlayers() { // this is not the correct, needs to sync turns. it switches to next worm but not correct turn? reset current players turn? issue with 
+    public void RemoveDeadPlayers() { 
         List<Player> playerToRemove = new List<Player>();
         foreach (var player in _players) {
-            if (player._worms.Count <= 0) {
+            if (player.Worms.Count <= 0) {
                 playerToRemove.Add(player);
             }
         }
@@ -136,29 +136,22 @@ public class GameManager : MonoBehaviour {
     public void WinCondition() {
         if (_players.Count == 1) {
             GameOver = true;
-            UIManager.Instance.ActivateEndscreen(_players[0].color);
+            UIManager.Instance.ActivateEndscreen(_players[0].Color);
         }
         else if (_players.Count == 0) {
-            GameOver = true;
-            // even all died
-        }
-    }
-
-    private void Update() {
-        if (Input.GetKeyDown(KeyCode.R)) {
-            UIManager.Instance.ActivateEndscreen(PlayerColor.Red);
+            GameOver = true; // Noone won
         }
     }
 
     private void GenerateWorms() {
         foreach (var nest in Nests) {
             for (int i = 0; i < _amountOfWorms; i++) {
-                if (nest.Owner.prefab == null) continue;
+                if (nest.Owner.Prefab == null) continue;
                 var spawnPoint = nest.GetRandomSpawnPoint();
-                var worm = Instantiate(nest.Owner.prefab, spawnPoint.position + SpawnOffset,
-                    nest.Owner.prefab.transform.rotation, Utility.GetCorrectSpawnParent(nest.Owner.color));
-                worm.GetComponent<PlayerController>().Owner = nest.Owner; //cache somehow?
-                worm.GetComponent<Worm>()._owner = nest.Owner;
+                var worm = Instantiate(nest.Owner.Prefab, spawnPoint.position + SpawnOffset,
+                    nest.Owner.Prefab.transform.rotation, Utility.GetCorrectSpawnParent(nest.Owner.Color));
+                worm.GetComponent<PlayerController>().Owner = nest.Owner; 
+                worm.GetComponent<Worm>().Owner = nest.Owner;
             }
         }
     }

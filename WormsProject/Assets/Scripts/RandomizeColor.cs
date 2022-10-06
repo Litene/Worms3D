@@ -2,22 +2,18 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 public class RandomizeColor : MonoBehaviour {
-    public Material[] materials;
-    // Start is called before the first frame update
+    [FormerlySerializedAs("materials")] public Material[] Materials;
     private void Awake() {
         foreach (Transform child in transform) {
             if (child.gameObject.GetComponent<MeshRenderer>()) {
-                child.gameObject.GetComponent<MeshRenderer>().material = materials[Random.Range(0, materials.Length)];
+                child.gameObject.GetComponent<MeshRenderer>().material = Materials[Random.Range(0, Materials.Length)];
             }
         }
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+ 
 }

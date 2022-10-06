@@ -6,37 +6,33 @@ using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 public class Nest : MonoBehaviour {
-    [SerializeField] private PlayerColor colorOfNest;
-    public List<Transform> spawnPoint = new List<Transform>();
+    [SerializeField] private PlayerColor _colorOfNest;
+    [FormerlySerializedAs("spawnPoint")] public List<Transform> SpawnPoint = new List<Transform>();
     public Player Owner;
     private Nest _intance;
     public PlayerColor GetNestColor() {
-        return colorOfNest;
+        return _colorOfNest;
     }
     public Nest SetOwner(Player owner) {
        this.Owner = owner;
-       colorOfNest = owner.color;
+       _colorOfNest = owner.Color;
        return _intance;
     }
 
     private void Awake() {
         _intance = this;
-        for (int i = 0; i < spawnPoint.Count; i++) {
-            spawnPoint[i] = transform.GetChild(i);
+        for (int i = 0; i < SpawnPoint.Count; i++) {
+            SpawnPoint[i] = transform.GetChild(i);
         }
     }
 
     public Transform GetRandomSpawnPoint() {
         Transform point = null;
-        point = spawnPoint[Random.Range(0, spawnPoint.Count)];
-        spawnPoint.Remove(point);
+        point = SpawnPoint[Random.Range(0, SpawnPoint.Count)];
+        SpawnPoint.Remove(point);
         return point;
     }
 
-    // public Nest SetNestColor(PlayerColor color) {
-    //     this.colorOfNest = color;
-    //     return _intance;
-    // }
 }
 
 

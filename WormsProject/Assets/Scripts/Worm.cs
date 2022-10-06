@@ -11,18 +11,17 @@ using UnityEngine.Serialization;
 
 public class Worm : MonoBehaviour, IDamageable {
     [SerializeField, Range(0.1f, 10f)] private float _movementSpeed = 3f;
-    public Weapon _currentWeapon;
+    [FormerlySerializedAs("_currentWeapon")] public Weapon CurrentWeapon;
     private Transform _weaponMuscle;
     private int _currentWeaponIndex;
     public int Ammo;
     public List<Weapon> AllWeapons;
-    public GameObject pBullet;
+    [FormerlySerializedAs("pBullet")] public GameObject PBullet;
     private ObjectPool<GameObject> _pool;
-    private float _bulletUpTime = 5;
     private Collider _collider;
-    [SerializeField] public Player _owner;
-    public int index;
-    public PlayerController _controller;
+    [FormerlySerializedAs("_owner")] [SerializeField] public Player Owner;
+    [FormerlySerializedAs("index")] public int Index;
+    [FormerlySerializedAs("_controller")] public PlayerController Controller;
     private bool _chargingWeapon;
     private bool _shooting;
     public HealthSystem Health { get; set; }
@@ -31,12 +30,12 @@ public class Worm : MonoBehaviour, IDamageable {
     [FormerlySerializedAs("currentMaxAmmo")] public int CurrentMaxAmmo;
 
     private void Awake() {
-        _controller = GetComponent<PlayerController>();
+        Controller = GetComponent<PlayerController>();
         _weaponMuscle = transform.Find("WeaponMuscle");
         AllWeapons = Resources.LoadAll<Weapon>("WeaponSO").ToList();
         _collider = GetComponent<Collider>();
         _pool = new ObjectPool<GameObject>(
-            () => { return Instantiate(pBullet); },
+            () => { return Instantiate(PBullet); },
             shootObject => { shootObject.gameObject.SetActive(true); },
             shootObject => { shootObject.gameObject.SetActive(false); },
             shootObject => { Destroy(shootObject.gameObject); },
@@ -45,34 +44,32 @@ public class Worm : MonoBehaviour, IDamageable {
     }
 
     private void Start() {
-        UIManager.Instance.ActivateMiddleTextImage(_controller.turn);
+        UIManager.Instance.ActivateMiddleTextImage(Controller.Turn);
         Health = new HealthSystem(MaxHealth);
     }
 
     public Player GetOwner() {
-        return _owner;
+        return Owner;
     }
 
     public void ChangeCurrentWeapon(bool initialCall) {
         if (initialCall) {
-            _currentWeapon = AllWeapons[_currentWeaponIndex];
+            CurrentWeapon = AllWeapons[_currentWeaponIndex];
             ResetWeapon();
             return;
         }
 
         _currentWeaponIndex = (_currentWeaponIndex + 1) % AllWeapons.Count;
-        _currentWeapon = AllWeapons[_currentWeaponIndex];
+        CurrentWeapon = AllWeapons[_currentWeaponIndex];
         ResetWeapon();
-        UIManager.Instance.SetWeaponSprite(_currentWeapon);
+        UIManager.Instance.SetWeaponSprite(CurrentWeapon);
     }
 
     public void ResetWeapon() {
-        // this needs to be called on correct worm, not all worms.
-        if (_currentWeapon != null) {
-            //_currentWeapon.PProjectile.GetComponent<Damager>().SetDamage(_currentWeapon.Damage);
-            Ammo = _currentWeapon.MaxAmmo;
-            CurrentMaxAmmo = _currentWeapon.MaxAmmo;
-            _currentWeapon.InitializeWeapon();
+        if (CurrentWeapon != null) {
+            Ammo = CurrentWeapon.MaxAmmo;
+            CurrentMaxAmmo = CurrentWeapon.MaxAmmo;
+            CurrentWeapon.InitializeWeapon();
         }
 
         UIManager.Instance.SetWeaponSprite(null);
@@ -82,20 +79,19 @@ public class Worm : MonoBehaviour, IDamageable {
 
     public void ShootCurrentWeapon(float pressValue) {
         _shooting = pressValue > 0.1f;
-        if (!(_controller.turn == PlayerTurn.Shoot)) {
+        if (!(Controller.Turn == PlayerTurn.Shoot)) {
             return;
         }
     }
 
     public void OnRelease() {
         // 
-        if (!(_currentWeapon is Sniper) || _controller.turn != PlayerTurn.Shoot) {
+        if (!(CurrentWeapon is Sniper) || Controller.Turn != PlayerTurn.Shoot) {
             return;
         }
 
-        var poolObject = _currentWeapon.Shoot(_weaponMuscle, ref Ammo, _pool,
-            this, true, true, _controller._orbitCamera);
-        // UIManager.Instance.UpdateBullets(_currentWeapon.MaxAmmo, _ammo, _controller.turn);
+        var poolObject = CurrentWeapon.Shoot(_weaponMuscle, ref Ammo, _pool,
+            this, true, true, Controller.OrbitCamera);
         if (poolObject != null) {
             StartCoroutine(ClearPoolObject(2, poolObject));
         }
@@ -107,17 +103,17 @@ public class Worm : MonoBehaviour, IDamageable {
     }
 
     private void Update() {
-        if (_currentWeapon != null) {
-            UIManager.Instance.UpdateBullets(CurrentMaxAmmo, Ammo, GameManager.Instance.CurrentPlayer);
-            UIManager.Instance.UpdateCoolDownTimer(_currentWeapon.ShootTimer, _currentWeapon.CoolDown, GameManager.Instance.CurrentPlayer);
+        if (CurrentWeapon != null) {
+            UIManager.Instance.UpdateBullets(GameManager.Instance.CurrentPlayer);
+            UIManager.Instance.UpdateCoolDownTimer(CurrentWeapon.ShootTimer, CurrentWeapon.CoolDown, GameManager.Instance.CurrentPlayer);
         }
 
-        if (!(_controller.turn == PlayerTurn.Shoot))
+        if (!(Controller.Turn == PlayerTurn.Shoot))
             return;
 
 
-        var poolObject = _currentWeapon.Shoot(_weaponMuscle, ref Ammo, _pool, this, _shooting, false,
-            _controller._orbitCamera);
+        var poolObject = CurrentWeapon.Shoot(_weaponMuscle, ref Ammo, _pool, this, _shooting, false,
+            Controller.OrbitCamera);
         if (poolObject != null) {
             StartCoroutine(ClearPoolObject(3, poolObject));
         }
@@ -131,8 +127,8 @@ public class Worm : MonoBehaviour, IDamageable {
     }
 
     public void ActivateWorm() {
-        InputManager.Instance.SetCurrentController(_controller);
-        _controller._orbitCamera.SetTarget(gameObject.transform);
+        InputManager.Instance.SetCurrentController(Controller);
+        Controller.OrbitCamera.SetTarget(gameObject.transform);
         ChangeCurrentWeapon(true);
     }
 
@@ -141,10 +137,9 @@ public class Worm : MonoBehaviour, IDamageable {
     }
 
     public void Die(Worm worm) {
-        worm._owner._worms.Remove(worm);
-        if (worm._owner._currentWorm == this) {
-            _controller.EnterAction(); // this can cause issues? is in shootmode, should go back to 
-            //GameManager.Instance.NextPlayer();
+        worm.Owner.Worms.Remove(worm);
+        if (worm.Owner.CurrentWorm == this) {
+            Controller.EnterAction(); 
         }
 
         GameManager.Instance.RemoveDeadPlayers();

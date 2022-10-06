@@ -9,11 +9,8 @@ public class OrbitCamera : MonoBehaviour {
     [SerializeField] private Transform _focus;
     [SerializeField, Range(0f, 20f)] private float _distance = 5f;
     [SerializeField, Min(0f)] private float _focusRadius = 1f;
-    //[SerializeField, Range(0f, 1f)] private float _focusCentering = 0.5f;
     [SerializeField, Range(0, 360)] private float _rotationSpeed = 10f;
     [SerializeField, Range(-89, 89)] private float _minVerticalAngle = -30, _maxVericalAngle = 60;
-    //[SerializeField, Min(0f)] private float _alignDelay = 5f;
-    //[SerializeField, Range(0f, 90f)] private float alignSmoothRange = 45f;
 
 
     private const int MaxCameraDistance = 5, MinCameraDistance = 0;

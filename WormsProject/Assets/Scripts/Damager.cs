@@ -12,7 +12,7 @@ public class Damager : MonoBehaviour {
     public bool Explosive;
     [SerializeField] private ParticleSystem _effect;
 
-    private Vector3 _impactPoint; // only has to be set first impact
+    private Vector3 _impactPoint;
     public void SetDamage(int damage) {
         this._damage = damage;
     }
@@ -21,9 +21,8 @@ public class Damager : MonoBehaviour {
         _pool = pool;
         _poolObject = bullet;
     }
-    private void OnCollisionEnter(Collision collision) { // MAKE AOE OR SINGLE TARGET NOT BOTH. return object to pool, can pool be a static reference?
-        //var contacts = collision.GetContact(0);
-        
+    private void OnCollisionEnter(Collision collision) {
+
         Worm hitObject = collision.gameObject.GetComponent<Worm>();
         if (hitObject != null) {
             hitObject.Health.Damage(hitObject, _damage);
