@@ -143,7 +143,8 @@ public class Worm : MonoBehaviour, IDamageable {
     public void Die(Worm worm) {
         worm._owner._worms.Remove(worm);
         if (worm._owner._currentWorm == this) {
-            GameManager.Instance.NextPlayer();
+            _controller.EnterAction(); // this can cause issues? is in shootmode, should go back to 
+            //GameManager.Instance.NextPlayer();
         }
 
         GameManager.Instance.RemoveDeadPlayers();

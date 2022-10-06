@@ -268,7 +268,7 @@ public class PlayerController : MonoBehaviour {
         _playerInput = Vector2.ClampMagnitude(_playerInput, 1f);
     }
 
-    public void EnterAction() {
+    public void EnterAction() { // this should be on player or something, logic should be split up. 
         if (_orbitCamera.CameraIsPanning) return;
 
         switch (turn) {
@@ -281,7 +281,7 @@ public class PlayerController : MonoBehaviour {
                 break;
             case PlayerTurn.Walk:
                 InputManager.Instance.DisableMovement();
-                _orbitCamera.ToggleCameraMode(true); // needs to remake to swap mode
+                _orbitCamera.ToggleCameraMode(true);
                 turn = PlayerTurn.SelectWeapon;
                 UIManager.Instance.ActivateMiddleTextImage(turn);
                 UIManager.Instance.ToggleAim(GameManager.Instance.CurrentPlayer);

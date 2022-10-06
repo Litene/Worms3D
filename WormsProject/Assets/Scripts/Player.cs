@@ -52,11 +52,12 @@ public class Player {
         }
 
         // _worms[_currentWormIndex].DeactivateWorm();
-        if (playerSwap) {
+        if (playerSwap && _worms.Count > _currentWormIndex) {
             _currentWorm = _worms[_currentWormIndex];
             _worms[_currentWormIndex].ActivateWorm();
             return;
         }
+        
 
         _currentWormIndex = (_currentWormIndex + 1) % _worms.Count;
         _currentWorm = _worms[_currentWormIndex];

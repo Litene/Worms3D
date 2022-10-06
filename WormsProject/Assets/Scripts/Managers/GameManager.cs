@@ -120,7 +120,7 @@ public class GameManager : MonoBehaviour {
         }
     }
 
-    public void RemoveDeadPlayers() {
+    public void RemoveDeadPlayers() { // this is not the correct, needs to sync turns. it switches to next worm but not correct turn? reset current players turn? issue with 
         List<Player> playerToRemove = new List<Player>();
         foreach (var player in _players) {
             if (player._worms.Count <= 0) {

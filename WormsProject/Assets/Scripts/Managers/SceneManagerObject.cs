@@ -39,7 +39,7 @@ public class SceneManagerObject : MonoBehaviour {
 
     public void SetUnitImage(int direction) {
         if (direction > 0) {
-            _currentUnitIndex = (_currentUnitIndex + 1) % _playerNumbers.Length;
+            _currentUnitIndex = (_currentUnitIndex + 1) % _unitNumbers.Length;
         }
         else {
             _currentUnitIndex--;
@@ -47,7 +47,7 @@ public class SceneManagerObject : MonoBehaviour {
                 _currentUnitIndex = 3;
             }
         }
-        
+
         _unitImage.sprite = _unitNumbers[_currentUnitIndex];
     }
 

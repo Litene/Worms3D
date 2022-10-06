@@ -39,8 +39,11 @@ public class MachineGun : Weapon {
             poolObject.transform.position = muscle.transform.position;
             Vector3 dir = cam.transform.rotation * Vector3.forward;
             dir.Normalize();
+            var damager = poolObject.GetComponent<Damager>();
+            damager.Explosive = false;
             poolObject.GetComponent<Rigidbody>().AddForce((dir + bulletSpread) * shootPower, ForceMode.Impulse);
-            poolObject.GetComponent<Damager>().SetDamage(Damage);
+            damager.SetDamage(Damage);
+            damager.SetReferences(poolObject, pool);
             ShootTimer = 0;
             return poolObject;
         }

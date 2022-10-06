@@ -45,9 +45,12 @@ public class Sniper : Weapon {
             poolObject.transform.position = muscle.transform.position;
             Vector3 dir = cam.transform.rotation * Vector3.forward;
             dir.Normalize();
+            var damager = poolObject.GetComponent<Damager>();
             //Vector3 dir = Quaternion.Euler(shootRotation).eulerAngles /** Vector3.forward*/;
+            damager.Explosive = true;
             poolObject.GetComponent<Rigidbody>().AddForce(dir * power, ForceMode.Impulse);
-            poolObject.GetComponent<Damager>().SetDamage(Damage);
+            damager.SetDamage(Damage);
+            damager.SetReferences(poolObject, pool);
             ShootTimer = 0;
             power = MinimumShootPower;
             
@@ -56,6 +59,8 @@ public class Sniper : Weapon {
 
         return null;
     }
+    
+    
 
     private bool ChargePower(bool HoldingButton) {
         if (HoldingButton) {
